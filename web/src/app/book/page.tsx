@@ -117,7 +117,7 @@ const schema = z.object({
   languages: z.array(z.string()).min(1, "Please select at least one language"),
   time_slots: z.array(z.string()).min(1, "Please select at least one time"),
   // Step 4
-  agreed: z.literal(true, { errorMap: () => ({ message: "You must agree to continue" }) }),
+  agreed: z.literal(true, { message: "You must agree to continue" }),
 });
 
 type FormData = z.infer<typeof schema>;
