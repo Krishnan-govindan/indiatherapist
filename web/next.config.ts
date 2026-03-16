@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "ui-avatars.com",
       },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+      },
     ],
   },
 
@@ -32,7 +36,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https://*.supabase.co https://ui-avatars.com https://www.google-analytics.com",
+              "img-src 'self' data: blob: https://*.supabase.co https://ui-avatars.com https://storage.googleapis.com https://www.google-analytics.com",
               "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://graph.facebook.com",
               "frame-ancestors 'none'",
             ].join("; "),
