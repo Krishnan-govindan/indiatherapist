@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { ALL_THERAPISTS } from "@/data/therapists";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -37,25 +38,33 @@ const LANGUAGES = [
   "Kannada",
   "Malayalam",
   "Punjabi",
+  "Urdu",
+  "Haryanvi",
+  "Marwari",
   "English",
 ];
 
 const SPECIALTIES = [
   "Anxiety",
   "Depression",
-  "Relationships",
-  "Family",
-  "Grief",
-  "Trauma",
-  "Career",
-  "Identity",
+  "Relationship",
+  "Couples",
   "Marriage",
+  "Family",
+  "Parenting",
+  "Trauma",
+  "Grief",
+  "Divorce",
+  "Career",
+  "Self-Esteem",
+  "Burnout",
+  "Identity",
 ];
 
 const TIER_OPTIONS: { value: TierFilter; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "premium", label: "Premium ($97)" },
-  { value: "elite", label: "Elite ($144)" },
+  { value: "premium", label: "Premium ($39-$77)" },
+  { value: "elite", label: "Elite ($91-$141)" },
 ];
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -445,6 +454,11 @@ export default function TherapistsPage() {
         data = json.therapists ?? json ?? [];
       }
 
+      // Fallback to static data if API returns empty
+      if (data.length === 0) {
+        data = ALL_THERAPISTS as Therapist[];
+      }
+
       // Client-side search filter
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -475,7 +489,41 @@ export default function TherapistsPage() {
 
       setTherapists(data);
     } catch {
-      setTherapists([]);
+      // Use static therapist data as fallback when API is unavailable
+      let data: Therapist[] = ALL_THERAPISTS as Therapist[];
+
+      // Apply client-side filters to fallback data
+      if (language !== "All Languages") {
+        data = data.filter((t) =>
+          t.languages.some((l) => l.toLowerCase() === language.toLowerCase())
+        );
+      }
+      if (tier !== "all") {
+        data = data.filter((t) => t.tier === tier);
+      }
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        data = data.filter((t) => t.full_name.toLowerCase().includes(q));
+      }
+      if (selectedSpecialties.length > 0) {
+        data = data.filter((t) =>
+          selectedSpecialties.every((s) =>
+            t.specialties.some((ts) =>
+              ts.toLowerCase().includes(s.toLowerCase())
+            )
+          )
+        );
+      }
+      if (sort === "experience") {
+        data = [...data].sort(
+          (a, b) => (b.experience_years ?? 0) - (a.experience_years ?? 0)
+        );
+      } else if (sort === "rate_asc") {
+        data = [...data].sort(
+          (a, b) => a.session_rate_cents - b.session_rate_cents
+        );
+      }
+      setTherapists(data);
     } finally {
       setLoading(false);
       setTimeout(() => setVisible(true), 50);

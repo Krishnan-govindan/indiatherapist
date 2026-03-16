@@ -1,57 +1,5 @@
 import Link from "next/link";
-
-interface TherapistData {
-  id: string;
-  full_name: string;
-  slug: string;
-  tier: string;
-  session_rate_cents: number;
-  specialties: string[];
-  languages: string[];
-  experience_years: number | null;
-  photo_url: string | null;
-  bio: string | null;
-}
-
-// Fallback data matching the seed therapists
-const FALLBACK_THERAPISTS: TherapistData[] = [
-  {
-    id: "1",
-    full_name: "Dr. Priya Sharma",
-    slug: "dr-priya-sharma",
-    tier: "premium",
-    session_rate_cents: 9700,
-    specialties: ["Anxiety", "Stress Management", "OCD"],
-    languages: ["Hindi", "English"],
-    experience_years: 10,
-    photo_url: null,
-    bio: "Delhi-based psychologist helping clients overcome anxiety using evidence-based CBT and mindfulness.",
-  },
-  {
-    id: "2",
-    full_name: "Kavitha Rajan",
-    slug: "kavitha-rajan",
-    tier: "premium",
-    session_rate_cents: 9700,
-    specialties: ["Relationships", "Couples Therapy", "Divorce Adjustment"],
-    languages: ["Tamil", "English"],
-    experience_years: 8,
-    photo_url: null,
-    bio: "Chennai-based relationship therapist specialising in modern relationship challenges.",
-  },
-  {
-    id: "3",
-    full_name: "Rahul Deshmukh",
-    slug: "rahul-deshmukh",
-    tier: "premium",
-    session_rate_cents: 9700,
-    specialties: ["Family Therapy", "Adolescent Issues", "Grief"],
-    languages: ["Hindi", "English", "Marathi"],
-    experience_years: 10,
-    photo_url: null,
-    bio: "Pune-based family therapist with a practical, solution-focused approach.",
-  },
-];
+import { FEATURED_THERAPISTS, type TherapistData } from "@/data/therapists";
 
 async function fetchTherapists(): Promise<TherapistData[]> {
   try {
@@ -63,21 +11,8 @@ async function fetchTherapists(): Promise<TherapistData[]> {
     const data = await res.json();
     return (data.therapists ?? data ?? []).slice(0, 3);
   } catch {
-    return FALLBACK_THERAPISTS;
+    return FEATURED_THERAPISTS;
   }
-}
-
-function AvatarInitials({ name }: { name: string }) {
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("");
-  return (
-    <div className="h-20 w-20 rounded-full bg-[#1B6B6B]/10 flex items-center justify-center">
-      <span className="text-2xl font-semibold text-[#1B6B6B]">{initials}</span>
-    </div>
-  );
 }
 
 export default async function TherapistsPreview() {
@@ -117,7 +52,15 @@ export default async function TherapistsPreview() {
                     className="h-20 w-20 rounded-full object-cover"
                   />
                 ) : (
-                  <AvatarInitials name={t.full_name} />
+                  <div className="h-20 w-20 rounded-full bg-[#1B6B6B]/10 flex items-center justify-center">
+                    <span className="text-2xl font-semibold text-[#1B6B6B]">
+                      {t.full_name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .slice(0, 2)
+                        .join("")}
+                    </span>
+                  </div>
                 )}
                 <div>
                   <h3 className="font-semibold text-gray-900 text-lg leading-tight">
@@ -125,10 +68,16 @@ export default async function TherapistsPreview() {
                   </h3>
                   {t.experience_years && (
                     <p className="text-sm text-gray-500 mt-0.5">
-                      {t.experience_years} years experience
+                      {t.experience_years}+ years experience
                     </p>
                   )}
-                  <span className="inline-block mt-1 rounded-full bg-[#1B6B6B]/10 px-2.5 py-0.5 text-xs font-medium text-[#1B6B6B] capitalize">
+                  <span
+                    className={`inline-block mt-1 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
+                      t.tier === "elite"
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-[#1B6B6B]/10 text-[#1B6B6B]"
+                    }`}
+                  >
                     {t.tier}
                   </span>
                 </div>
@@ -148,7 +97,7 @@ export default async function TherapistsPreview() {
 
               {/* Languages */}
               <p className="text-sm text-gray-500 mb-4">
-                🗣️ {t.languages.join(" · ")}
+                {t.languages.join(" · ")}
               </p>
 
               {/* Rate + CTA */}
@@ -176,7 +125,7 @@ export default async function TherapistsPreview() {
             href="/therapists"
             className="inline-flex items-center gap-2 rounded-full border-2 border-[#1B6B6B] px-8 py-3 text-base font-semibold text-[#1B6B6B] hover:bg-[#1B6B6B] hover:text-white transition-colors"
           >
-            See All Therapists →
+            See All Therapists
           </Link>
         </div>
       </div>

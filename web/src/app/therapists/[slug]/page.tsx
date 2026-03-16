@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BookingCard from "./BookingCard";
 import JsonLd from "@/components/SEO/JsonLd";
+import { getTherapistsBySlugMap, type TherapistData } from "@/data/therapists";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -27,65 +28,32 @@ interface Therapist {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Fallback data (matches seed.sql)
+// Fallback data (all real therapists)
 // ─────────────────────────────────────────────────────────────
 
-const FALLBACK: Record<string, Therapist> = {
-  "dr-priya-sharma": {
-    id: "1",
-    full_name: "Dr. Priya Sharma",
-    slug: "dr-priya-sharma",
-    tier: "premium",
-    session_rate_cents: 9700,
-    specialties: ["Anxiety", "Stress Management", "OCD", "Mindfulness", "CBT"],
-    languages: ["Hindi", "English"],
-    experience_years: 10,
-    photo_url: null,
-    bio: "Delhi-based psychologist helping clients overcome anxiety using evidence-based CBT and mindfulness. Dr. Sharma has worked with hundreds of NRIs navigating the stress of living between two cultures — from H-1B visa anxiety to family pressure and loneliness abroad. Her approach is warm, practical, and deeply rooted in the Indian cultural context.",
-    education: "Ph.D. Clinical Psychology, University of Delhi",
-    credentials: "Licensed Clinical Psychologist (RCI Registered)",
-    therapy_types: ["Cognitive Behavioural Therapy", "Mindfulness-Based Therapy", "Acceptance & Commitment Therapy"],
-    whatsapp_number: null,
-    city: "Delhi",
-    country: "India",
-  },
-  "kavitha-rajan": {
-    id: "2",
-    full_name: "Kavitha Rajan",
-    slug: "kavitha-rajan",
-    tier: "premium",
-    session_rate_cents: 9700,
-    specialties: ["Relationships", "Couples Therapy", "Divorce Adjustment", "Communication", "Intimacy"],
-    languages: ["Tamil", "English"],
-    experience_years: 8,
-    photo_url: null,
-    bio: "Chennai-based relationship therapist specialising in modern relationship challenges for the Indian diaspora. Kavitha understands the unique pressures that NRI couples face — cultural differences, long-distance relationships, arranged vs love marriage tensions, and the isolation of building a life abroad without family support nearby.",
-    education: "M.Sc. Counselling Psychology, Madras University",
-    credentials: "Licensed Counsellor, Member of IACP",
-    therapy_types: ["Emotionally Focused Therapy", "Gottman Method", "Narrative Therapy"],
-    whatsapp_number: null,
-    city: "Chennai",
-    country: "India",
-  },
-  "rahul-deshmukh": {
-    id: "3",
-    full_name: "Rahul Deshmukh",
-    slug: "rahul-deshmukh",
-    tier: "premium",
-    session_rate_cents: 9700,
-    specialties: ["Family Therapy", "Adolescent Issues", "Grief", "Parenting", "Identity"],
-    languages: ["Hindi", "English", "Marathi"],
-    experience_years: 10,
-    photo_url: null,
-    bio: "Pune-based family therapist with a practical, solution-focused approach. Rahul specialises in helping NRI families navigate the complex dynamics of raising children across cultures, managing relationships with parents in India, and processing grief from afar. He brings warmth and structure to every session.",
-    education: "M.A. Clinical Psychology, SNDT Women's University",
-    credentials: "Registered Psychologist, RCI",
-    therapy_types: ["Structural Family Therapy", "Solution-Focused Brief Therapy", "Grief Processing"],
-    whatsapp_number: null,
-    city: "Pune",
-    country: "India",
-  },
-};
+const FALLBACK: Record<string, Therapist> = Object.fromEntries(
+  Object.entries(getTherapistsBySlugMap()).map(([slug, t]: [string, TherapistData]) => [
+    slug,
+    {
+      id: t.id,
+      full_name: t.full_name,
+      slug: t.slug,
+      tier: t.tier,
+      session_rate_cents: t.session_rate_cents,
+      specialties: t.specialties,
+      languages: t.languages,
+      experience_years: t.experience_years,
+      photo_url: t.photo_url,
+      bio: t.bio,
+      education: t.education,
+      credentials: t.credentials,
+      therapy_types: t.therapy_types,
+      whatsapp_number: t.whatsapp_number,
+      city: t.city,
+      country: t.country,
+    },
+  ])
+);
 
 // ─────────────────────────────────────────────────────────────
 // Language → flag emoji
