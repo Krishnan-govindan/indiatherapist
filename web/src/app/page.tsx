@@ -16,7 +16,7 @@ const ORG_SCHEMA = {
   description: "India's only dedicated online therapy platform for NRIs worldwide",
   areaServed: ["AU", "US", "GB", "CA", "NZ", "SG", "AE", "IN"],
   availableLanguage: ["en", "hi", "ta", "te", "gu", "mr", "kn", "ml", "pa"],
-  priceRange: "$97–$144",
+  priceRange: "$39–$141",
   sameAs: ["https://www.facebook.com/indiatherapist"],
   contactPoint: {
     "@type": "ContactPoint",
@@ -101,9 +101,9 @@ function Hero() {
 
 const trustItems = [
   "🌏 NRIs in 14+ countries",
-  "👩‍⚕️ 20 therapists",
-  "🗣️ 11 languages",
-  "💰 From $97/session",
+  "👩‍⚕️ 26 therapists",
+  "🗣️ 12 languages",
+  "💰 From $39/session",
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -290,7 +290,7 @@ const trustSignals = [
   {
     icon: "💰",
     title: "60% less than local therapy",
-    body: "$97–$144/session vs. $150–$300 in the US or UK. Same quality, radically better value.",
+    body: "$39–$141/session vs. $150–$300 in the US or UK. Same quality, radically better value.",
   },
   {
     icon: "✅",
