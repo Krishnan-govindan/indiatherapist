@@ -12,7 +12,7 @@ interface Conversation {
   id: string;
   direction: "inbound" | "outbound";
   channel: string;
-  body: string;
+  message_body: string;
   created_at: string;
 }
 
@@ -259,7 +259,7 @@ function LeadDrawer({
                         <span className="text-xs text-gray-600">{c.channel}</span>
                         <span className="text-xs text-gray-600 ml-auto">{fmtDate(c.created_at)}</span>
                       </div>
-                      <p className="whitespace-pre-wrap">{c.body}</p>
+                      <p className="whitespace-pre-wrap">{c.message_body}</p>
                     </div>
                   ))}
               </div>

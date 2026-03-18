@@ -69,7 +69,7 @@ router.get('/stats', async (_req, res) => {
 
       // Pending appointments
       supabaseAdmin.from('appointments').select('id', { count: 'exact', head: true })
-        .eq('status', 'pending'),
+        .in('status', ['pending_therapist', 'slots_offered', 'slot_selected', 'payment_pending']),
 
       // Avg response time: avg of (first_message_at - created_at) in minutes
       supabaseAdmin.from('leads')
@@ -84,7 +84,7 @@ router.get('/stats', async (_req, res) => {
 
       // Recent 10 leads
       supabaseAdmin.from('leads')
-        .select('id, full_name, status, source, created_at, therapists(full_name)')
+        .select('id, full_name, status, source, created_at, therapists!matched_therapist_id(full_name)')
         .order('created_at', { ascending: false })
         .limit(10),
     ]);
@@ -161,10 +161,10 @@ router.get('/leads', async (req, res) => {
       .from('leads')
       .select(`
         id, full_name, phone, whatsapp_number, email, status, source,
-        country, city, concern, created_at, updated_at,
+        country, city, concern, pain_summary, created_at, updated_at,
         voice_call_summary, first_message_sent_at,
-        therapists(id, full_name),
-        conversations(id, direction, channel, body, created_at)
+        therapists!matched_therapist_id(id, full_name),
+        conversations(id, direction, channel, message_body, created_at)
       `, { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -228,7 +228,7 @@ router.post('/leads/:id/message', async (req, res) => {
     await sendTextMessage(to, body);
 
     await supabaseAdmin.from('conversations').insert({
-      lead_id: id, direction: 'outbound', channel: 'whatsapp', body,
+      lead_id: id, direction: 'outbound', channel: 'whatsapp', message_body: body,
     });
 
     res.json({ ok: true });
