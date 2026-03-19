@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-const WA_OWNER = "919999999999"; // Replace with real owner number
+const WA_OWNER = "18568782862"; // Meta API WhatsApp: +1 (856) 878-2862
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -24,21 +24,33 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) =>
+            link.external ? (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
+              >
+                {link.label}
+              </a>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
+              >
+                {link.label}
+              </Link>
+            )
+          )}
         </div>
 
         {/* Desktop CTA */}
         <div className="hidden md:block">
           <Link
-            href="/book"
+            href="/therapists"
             className="inline-flex items-center rounded-full bg-[#7B5FB8] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#6B4AA0] transition-colors"
           >
             Get Started
@@ -67,7 +79,19 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden border-t border-[#7B5FB8]/10 bg-[#F8F5FF] px-4 pb-4 pt-2">
           <div className="flex flex-col gap-3">
-            {navLinks.map((link) => (
+            {navLinks.map((link) =>
+              link.external ? (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="py-2 text-base font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
+              >
+                {link.label}
+              </a>
+            ) : (
               <Link
                 key={link.href}
                 href={link.href}
@@ -78,7 +102,7 @@ export default function Navbar() {
               </Link>
             ))}
             <Link
-              href="/book"
+              href="/therapists"
               onClick={() => setOpen(false)}
               className="mt-2 inline-flex items-center justify-center rounded-full bg-[#7B5FB8] px-5 py-3 text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors"
             >
@@ -106,7 +130,7 @@ const navLinks = [
   { label: "Find a Therapist", href: "/therapists" },
   { label: "How It Works", href: "/#how-it-works" },
   { label: "About", href: "/about" },
-  { label: "Blog", href: "/blog" },
+  { label: "Blog", href: "https://blogs.indiatherapist.com", external: true },
 ];
 
 function LotusIcon({ className }: { className?: string }) {

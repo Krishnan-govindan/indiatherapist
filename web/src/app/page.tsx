@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import TherapistsPreview from "@/components/TherapistsPreview";
 import JsonLd from "@/components/SEO/JsonLd";
 
-const WA_LINK = "https://wa.me/919999999999"; // Replace with real owner number
+const WA_LINK = "https://wa.me/18568782862"; // Meta API WhatsApp: +1 (856) 878-2862
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.com";
 
@@ -214,7 +214,7 @@ function HowItWorks() {
 
         <div className="mt-14 text-center">
           <Link
-            href="/book"
+            href="/therapists"
             className="inline-flex items-center gap-2 rounded-full bg-[#A78BDE] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#9B7FD4] transition-all hover:-translate-y-0.5"
           >
             Get Started in 2 Minutes →
@@ -385,6 +385,89 @@ const testimonials = [
 ];
 
 // ─────────────────────────────────────────────────────────────
+// FAQ
+// ─────────────────────────────────────────────────────────────
+
+function FAQ() {
+  return (
+    <section className="bg-[#F8F5FF] py-20 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-3xl">
+        <div className="text-center mb-14">
+          <h2
+            className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4"
+            style={{ fontFamily: "'Outfit', sans-serif" }}
+          >
+            Frequently asked questions
+          </h2>
+          <p className="text-gray-500 text-lg">
+            Everything you need to know before your first session.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {faqs.map((faq) => (
+            <details
+              key={faq.q}
+              className="group rounded-2xl bg-white border border-gray-100 shadow-sm"
+            >
+              <summary className="flex cursor-pointer items-center justify-between p-6 text-left font-semibold text-gray-900 hover:text-[#7B5FB8] transition-colors [&::-webkit-details-marker]:hidden list-none">
+                <span>{faq.q}</span>
+                <svg
+                  className="h-5 w-5 shrink-0 text-[#7B5FB8] transition-transform group-open:rotate-180"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <div className="px-6 pb-6 text-gray-500 leading-relaxed">
+                {faq.a}
+              </div>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const faqs = [
+  {
+    q: "How is India Therapist different from regular online therapy?",
+    a: "Our therapists are all Indian, culturally aware, and specialize in NRI-specific issues like immigration stress, family dynamics across borders, and cultural identity. You won't need to explain what Diwali is or why your parents' opinion matters so much.",
+  },
+  {
+    q: "What languages are sessions available in?",
+    a: "We offer sessions in Hindi, Tamil, Telugu, Gujarati, Marathi, Kannada, Malayalam, Punjabi, Bengali, Urdu, and English. You can switch languages mid-session if needed.",
+  },
+  {
+    q: "How much does a session cost?",
+    a: "Sessions range from $39 to $141 per 60-minute session, depending on the therapist's experience and specialization. That's 60% less than typical Western therapy rates.",
+  },
+  {
+    q: "What if I don't like my therapist?",
+    a: "Your first session is risk-free. If it's not the right fit, you get a full refund — no questions asked. We can also help you switch to another therapist at no extra cost.",
+  },
+  {
+    q: "How quickly can I get an appointment?",
+    a: "Most clients are matched with a therapist and have their first session within 24 hours. We work across all time zones, so scheduling is flexible.",
+  },
+  {
+    q: "Is my information confidential?",
+    a: "Absolutely. All sessions are private and encrypted. We follow strict confidentiality protocols. Your employer, family, or anyone else will never know you're in therapy unless you choose to tell them.",
+  },
+  {
+    q: "Do you accept insurance?",
+    a: "We don't currently bill insurance directly. However, we provide detailed invoices that many clients successfully submit to their insurance for out-of-network reimbursement.",
+  },
+  {
+    q: "What issues can India Therapist help with?",
+    a: "Our therapists specialize in anxiety, depression, relationship issues, family conflicts, career stress, immigration-related concerns, cultural identity, grief, and more. If you're unsure, reach out and we'll guide you.",
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
 // Footer
 // ─────────────────────────────────────────────────────────────
 
@@ -423,13 +506,10 @@ function Footer() {
               Company
             </h4>
             <ul className="space-y-2.5 text-sm text-[#C4B5F0]">
-              {["About Us", "How It Works", "Blog", "For Therapists"].map((l) => (
-                <li key={l}>
-                  <Link href="/" className="hover:text-white transition-colors">
-                    {l}
-                  </Link>
-                </li>
-              ))}
+              <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
+              <li><Link href="/#how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
+              <li><a href="https://blogs.indiatherapist.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Blog</a></li>
+              <li><Link href="/therapists" className="hover:text-white transition-colors">For Therapists</Link></li>
             </ul>
           </div>
 
@@ -439,13 +519,9 @@ function Footer() {
               Legal
             </h4>
             <ul className="space-y-2.5 text-sm text-[#C4B5F0]">
-              {["Privacy Policy", "Terms of Service", "Refund Policy"].map((l) => (
-                <li key={l}>
-                  <Link href="/" className="hover:text-white transition-colors">
-                    {l}
-                  </Link>
-                </li>
-              ))}
+              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">Refund Policy</Link></li>
             </ul>
           </div>
         </div>
@@ -481,6 +557,7 @@ export default function Home() {
         <TrustSignals />
         <TherapistsPreview />
         <Testimonials />
+        <FAQ />
       </main>
       <Footer />
     </>
