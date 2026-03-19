@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '../lib/supabase';
 import { logger } from '../lib/logger';
+import { sendTemplateMessage } from '../services/whatsapp';
 import type { Lead, Therapist } from '../lib/types';
 
 const router = Router();
@@ -169,6 +170,32 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     });
 
     res.json({ checkout_url: session.url });
+
+    // ── 6. Send WhatsApp welcome template (non-blocking) ──────
+    const waTarget = lead.whatsapp_number ?? lead.phone ?? normalisedPhone;
+    const templateName = process.env.META_WA_WELCOME_TEMPLATE ?? 'welcome_message';
+    const templateBody = "Thank you for contacting India Therapist and I'll help you find the right therapist";
+
+    sendTemplateMessage(waTarget, templateName, 'en', [])
+      .then(() =>
+        supabaseAdmin.from('conversations').insert({
+          lead_id: lead.id,
+          channel: 'whatsapp',
+          direction: 'outbound',
+          from_number: process.env.META_WA_PHONE_NUMBER_ID ?? null,
+          to_number: waTarget,
+          message_body: templateBody,
+          ai_generated: false,
+          ai_intent: 'welcome',
+        })
+      )
+      .catch((err) => {
+        logger.error('Checkout: WhatsApp welcome template failed', {
+          leadId: lead.id,
+          error: (err as Error).message,
+        });
+      });
+
   } catch (err) {
     logger.error('Stripe Checkout Session creation failed', {
       error: (err as Error).message,
