@@ -31,27 +31,27 @@ function LoginForm() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-[#1A1030] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-3xl mb-2">🌿</div>
           <h1 className="text-xl font-bold text-white">India Therapist Admin</h1>
-          <p className="text-gray-400 text-sm mt-1">Enter your admin password</p>
+          <p className="text-[#B0A8C0] text-sm mt-1">Enter your admin password</p>
         </div>
-        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+        <form onSubmit={handleSubmit} className="bg-[#2A1A4A] rounded-2xl p-6 border border-[#3E2868]">
           <input
             type="password"
             value={secret}
             onChange={(e) => setSecret(e.target.value)}
             placeholder="Admin secret"
             autoFocus
-            className="w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 mb-3"
+            className="w-full rounded-xl bg-[#3E2868] border border-[#553888] px-4 py-3 text-white placeholder-[#8B7AA0] text-sm focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/50 mb-3"
           />
           {error && <p className="text-red-400 text-xs mb-3">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 text-sm transition-colors disabled:opacity-50"
+            className="w-full rounded-xl bg-[#7B5FB8] hover:bg-[#6B4AA0] text-white font-semibold py-3 text-sm transition-colors disabled:opacity-50"
           >
             {loading ? "Checking…" : "Sign in →"}
           </button>

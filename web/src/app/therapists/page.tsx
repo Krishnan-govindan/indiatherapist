@@ -115,8 +115,8 @@ function AvatarInitials({ name }: { name: string }) {
     .slice(0, 2)
     .join("");
   return (
-    <div className="h-16 w-16 rounded-full bg-[#1B6B6B]/10 flex items-center justify-center shrink-0">
-      <span className="text-xl font-semibold text-[#1B6B6B]">{initials}</span>
+    <div className="h-16 w-16 rounded-full bg-[#7B5FB8]/10 flex items-center justify-center shrink-0">
+      <span className="text-xl font-semibold text-[#7B5FB8]">{initials}</span>
     </div>
   );
 }
@@ -152,7 +152,7 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
             </h3>
             <span
               title="Verified therapist"
-              className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#1B6B6B] text-white text-[10px] shrink-0"
+              className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#7B5FB8] text-white text-[10px] shrink-0"
             >
               ✓
             </span>
@@ -170,7 +170,7 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
             className={`inline-block mt-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
               isElite
                 ? "bg-amber-100 text-amber-800"
-                : "bg-[#1B6B6B]/10 text-[#1B6B6B]"
+                : "bg-[#7B5FB8]/10 text-[#7B5FB8]"
             }`}
           >
             {therapist.tier}
@@ -183,7 +183,7 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
         {therapist.specialties.slice(0, 3).map((s) => (
           <span
             key={s}
-            className="rounded-full bg-[#D4A853]/15 px-2.5 py-0.5 text-xs font-medium text-[#8B6914]"
+            className="rounded-full bg-[#A78BDE]/15 px-2.5 py-0.5 text-xs font-medium text-[#6B4AA0]"
           >
             {s}
           </span>
@@ -218,13 +218,13 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
         <div className="flex gap-2">
           <Link
             href={`/therapists/${therapist.slug}`}
-            className="flex-1 rounded-full border border-[#1B6B6B] px-4 py-2 text-sm font-semibold text-[#1B6B6B] hover:bg-[#1B6B6B] hover:text-white transition-colors text-center"
+            className="flex-1 rounded-full border border-[#7B5FB8] px-4 py-2 text-sm font-semibold text-[#7B5FB8] hover:bg-[#7B5FB8] hover:text-white transition-colors text-center"
           >
             View Profile
           </Link>
           <Link
             href={`/book?therapist=${therapist.slug}`}
-            className="flex-1 rounded-full bg-[#1B6B6B] px-4 py-2 text-sm font-semibold text-white hover:bg-[#134F4F] transition-colors text-center"
+            className="flex-1 rounded-full bg-[#7B5FB8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors text-center"
           >
             Book Now
           </Link>
@@ -285,7 +285,7 @@ function FilterBar({
           </svg>
           Filters
           {activeCount > 0 && (
-            <span className="ml-1 rounded-full bg-[#1B6B6B] text-white text-xs px-1.5 py-0.5">
+            <span className="ml-1 rounded-full bg-[#7B5FB8] text-white text-xs px-1.5 py-0.5">
               {activeCount}
             </span>
           )}
@@ -296,7 +296,7 @@ function FilterBar({
             placeholder="Search by name…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="rounded-full border border-gray-200 px-4 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-[#1B6B6B]/30"
+            className="rounded-full border border-gray-200 px-4 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/30"
           />
         </div>
       </div>
@@ -318,7 +318,7 @@ function FilterBar({
               placeholder="Search by name…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B6B6B]/30"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/30"
             />
           </div>
 
@@ -330,7 +330,7 @@ function FilterBar({
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B6B6B]/30 bg-white"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/30 bg-white"
             >
               {LANGUAGES.map((l) => (
                 <option key={l}>{l}</option>
@@ -346,7 +346,7 @@ function FilterBar({
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortOption)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B6B6B]/30 bg-white"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/30 bg-white"
             >
               {SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -368,7 +368,7 @@ function FilterBar({
                   onClick={() => setTier(o.value)}
                   className={`px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                     tier === o.value
-                      ? "bg-[#1B6B6B] text-white"
+                      ? "bg-[#7B5FB8] text-white"
                       : "bg-white text-gray-600 hover:bg-gray-50"
                   }`}
                 >
@@ -393,8 +393,8 @@ function FilterBar({
                   onClick={() => toggleSpecialty(s)}
                   className={`rounded-full px-3 py-1 text-sm font-medium transition-colors border ${
                     active
-                      ? "bg-[#1B6B6B] text-white border-[#1B6B6B]"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-[#1B6B6B] hover:text-[#1B6B6B]"
+                      ? "bg-[#7B5FB8] text-white border-[#7B5FB8]"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-[#7B5FB8] hover:text-[#7B5FB8]"
                   }`}
                 >
                   {s}
@@ -537,13 +537,13 @@ export default function TherapistsPage() {
   }, [fetchTherapists]);
 
   return (
-    <main className="min-h-screen bg-[#FFF8F0]">
+    <main className="min-h-screen bg-[#F8F5FF]">
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <h1
             className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3"
-            style={{ fontFamily: "var(--font-playfair)" }}
+            style={{ fontFamily: "'Outfit', sans-serif" }}
           >
             Find Your Indian Therapist
           </h1>

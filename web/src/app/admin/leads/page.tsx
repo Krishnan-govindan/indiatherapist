@@ -42,7 +42,7 @@ interface TherapistOption {
 // ─────────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, string> = {
-  new:             "bg-gray-700 text-gray-200",
+  new:             "bg-[#553888] text-[#E0D5FF]",
   voice_called:    "bg-blue-900 text-blue-200",
   qualified:       "bg-purple-900 text-purple-200",
   matched:         "bg-orange-900 text-orange-200",
@@ -53,7 +53,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${STATUS_COLORS[status] ?? "bg-gray-700 text-gray-200"}`}>
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${STATUS_COLORS[status] ?? "bg-[#553888] text-[#E0D5FF]"}`}>
       {status.replace(/_/g, " ")}
     </span>
   );
@@ -64,7 +64,7 @@ function StatusBadge({ status }: { status: string }) {
 // ─────────────────────────────────────────────────────────────
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`bg-gray-800 animate-pulse rounded-lg ${className ?? ""}`} />;
+  return <div className={`bg-[#3E2868] animate-pulse rounded-lg ${className ?? ""}`} />;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -123,19 +123,19 @@ function LeadDrawer({
   return (
     <div className="fixed inset-0 z-50 flex">
       {/* Backdrop */}
-      <div className="flex-1 bg-black/60" onClick={onClose} />
+      <div className="flex-1 bg-[#1A1030]/70" onClick={onClose} />
       {/* Panel */}
-      <div className="w-full max-w-2xl bg-gray-900 border-l border-gray-800 overflow-y-auto flex flex-col">
+      <div className="w-full max-w-2xl bg-[#2A1A4A] border-l border-[#3E2868] overflow-y-auto flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 sticky top-0 bg-gray-900 z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#3E2868] sticky top-0 bg-[#2A1A4A] z-10">
           <div>
             <h2 className="text-lg font-bold text-white">{lead.full_name}</h2>
             <div className="flex items-center gap-2 mt-1">
               <StatusBadge status={lead.status} />
-              <span className="text-xs text-gray-500">{lead.source ?? "—"}</span>
+              <span className="text-xs text-[#8B7AA0]">{lead.source ?? "—"}</span>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white text-xl">✕</button>
+          <button onClick={onClose} className="text-[#8B7AA0] hover:text-white text-xl">✕</button>
         </div>
 
         <div className="flex-1 p-6 space-y-6">
@@ -147,34 +147,34 @@ function LeadDrawer({
               { label: "Country", value: lead.country ?? "—" },
               { label: "Created", value: fmtDate(lead.created_at) },
             ].map((r) => (
-              <div key={r.label} className="bg-gray-800 rounded-xl p-3">
-                <p className="text-xs text-gray-500 mb-0.5">{r.label}</p>
-                <p className="text-gray-200 font-medium">{r.value}</p>
+              <div key={r.label} className="bg-[#3E2868] rounded-xl p-3">
+                <p className="text-xs text-[#8B7AA0] mb-0.5">{r.label}</p>
+                <p className="text-[#E0D5FF] font-medium">{r.value}</p>
               </div>
             ))}
           </div>
 
           {/* Concern */}
           {lead.concern && (
-            <div className="bg-gray-800 rounded-xl p-4">
-              <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Concern</p>
-              <p className="text-sm text-gray-200">{lead.concern}</p>
+            <div className="bg-[#3E2868] rounded-xl p-4">
+              <p className="text-xs text-[#8B7AA0] mb-1 uppercase tracking-wide">Concern</p>
+              <p className="text-sm text-[#E0D5FF]">{lead.concern}</p>
             </div>
           )}
 
           {/* Voice call summary */}
           {lead.voice_call_summary && (
-            <div className="bg-blue-950/50 border border-blue-800/40 rounded-xl p-4">
-              <p className="text-xs text-blue-400 mb-1 uppercase tracking-wide">📞 Voice Call Summary</p>
-              <p className="text-sm text-gray-300">{lead.voice_call_summary}</p>
+            <div className="bg-[#3E2868]/50 border border-[#553888]/40 rounded-xl p-4">
+              <p className="text-xs text-[#A78BDE] mb-1 uppercase tracking-wide">📞 Voice Call Summary</p>
+              <p className="text-sm text-[#C4B5F0]">{lead.voice_call_summary}</p>
             </div>
           )}
 
           {/* Actions */}
           <div className="grid grid-cols-1 gap-3">
             {/* Status */}
-            <div className="bg-gray-800 rounded-xl p-4">
-              <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Change Status</p>
+            <div className="bg-[#3E2868] rounded-xl p-4">
+              <p className="text-xs text-[#8B7AA0] mb-2 uppercase tracking-wide">Change Status</p>
               <div className="flex flex-wrap gap-2">
                 {ALL_STATUSES.map((s) => (
                   <button
@@ -182,8 +182,8 @@ function LeadDrawer({
                     onClick={() => patchLead({ status: s })}
                     className={`rounded-full px-2.5 py-1 text-xs font-medium transition-all border ${
                       lead.status === s
-                        ? "border-teal-500 bg-teal-900/40 text-teal-300"
-                        : "border-gray-700 text-gray-400 hover:border-gray-500"
+                        ? "border-[#7B5FB8] bg-[#7B5FB8]/20 text-[#C4B5F0]"
+                        : "border-[#553888] text-[#B0A8C0] hover:border-[#8B7AA0]"
                     }`}
                   >
                     {s.replace(/_/g, " ")}
@@ -193,13 +193,13 @@ function LeadDrawer({
             </div>
 
             {/* Reassign */}
-            <div className="bg-gray-800 rounded-xl p-4">
-              <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Assign Therapist</p>
+            <div className="bg-[#3E2868] rounded-xl p-4">
+              <p className="text-xs text-[#8B7AA0] mb-2 uppercase tracking-wide">Assign Therapist</p>
               <div className="flex gap-2">
                 <select
                   value={selectedTherapist}
                   onChange={(e) => setSelectedTherapist(e.target.value)}
-                  className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                  className="flex-1 bg-[#553888] border border-[#6B5A8A] rounded-lg px-3 py-2 text-sm text-[#E0D5FF] focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/40"
                 >
                   <option value="">— Select therapist —</option>
                   {therapists.map((t) => (
@@ -209,7 +209,7 @@ function LeadDrawer({
                 <button
                   onClick={reassign}
                   disabled={reassigning || !selectedTherapist}
-                  className="rounded-lg bg-teal-700 hover:bg-teal-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-40 transition-colors"
+                  className="rounded-lg bg-[#7B5FB8] hover:bg-[#6B4AA0] text-white px-4 py-2 text-sm font-medium disabled:opacity-40 transition-colors"
                 >
                   {reassigning ? "…" : "Assign"}
                 </button>
@@ -217,19 +217,19 @@ function LeadDrawer({
             </div>
 
             {/* Send WA */}
-            <div className="bg-gray-800 rounded-xl p-4">
-              <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Send WhatsApp Message</p>
+            <div className="bg-[#3E2868] rounded-xl p-4">
+              <p className="text-xs text-[#8B7AA0] mb-2 uppercase tracking-wide">Send WhatsApp Message</p>
               <textarea
                 rows={3}
                 value={waBody}
                 onChange={(e) => setWaBody(e.target.value)}
                 placeholder="Type a message…"
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500/40 mb-2"
+                className="w-full bg-[#553888] border border-[#6B5A8A] rounded-lg px-3 py-2 text-sm text-[#E0D5FF] resize-none focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/40 mb-2"
               />
               <button
                 onClick={sendWA}
                 disabled={sending || !waBody.trim()}
-                className="rounded-lg bg-green-700 hover:bg-green-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-40 transition-colors"
+                className="rounded-lg bg-[#4A9B60] hover:bg-[#3A8B50] text-white px-4 py-2 text-sm font-medium disabled:opacity-40 transition-colors"
               >
                 {sending ? "Sending…" : "Send"}
               </button>
@@ -238,9 +238,9 @@ function LeadDrawer({
 
           {/* Conversation history */}
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Conversation History</p>
+            <p className="text-xs text-[#8B7AA0] uppercase tracking-wide mb-3">Conversation History</p>
             {lead.conversations.length === 0 ? (
-              <p className="text-sm text-gray-600">No messages yet</p>
+              <p className="text-sm text-[#6B5A8A]">No messages yet</p>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {[...lead.conversations]
@@ -250,14 +250,14 @@ function LeadDrawer({
                       key={c.id}
                       className={`rounded-xl p-3 text-sm ${
                         c.direction === "inbound"
-                          ? "bg-gray-800 text-gray-200"
-                          : "bg-teal-900/40 text-teal-100 ml-6"
+                          ? "bg-[#3E2868] text-[#E0D5FF]"
+                          : "bg-[#7B5FB8]/20 text-[#E0D5FF] ml-6"
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium text-gray-400 capitalize">{c.direction}</span>
-                        <span className="text-xs text-gray-600">{c.channel}</span>
-                        <span className="text-xs text-gray-600 ml-auto">{fmtDate(c.created_at)}</span>
+                        <span className="text-xs font-medium text-[#B0A8C0] capitalize">{c.direction}</span>
+                        <span className="text-xs text-[#6B5A8A]">{c.channel}</span>
+                        <span className="text-xs text-[#6B5A8A] ml-auto">{fmtDate(c.created_at)}</span>
                       </div>
                       <p className="whitespace-pre-wrap">{c.message_body}</p>
                     </div>
@@ -344,7 +344,7 @@ function LeadsContent() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Leads</h1>
-          <p className="text-gray-400 text-sm mt-0.5">{total} total</p>
+          <p className="text-[#B0A8C0] text-sm mt-0.5">{total} total</p>
         </div>
       </div>
 
@@ -356,8 +356,8 @@ function LeadsContent() {
             onClick={() => { setStatusFilter(s); setPage(1); }}
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors capitalize ${
               statusFilter === s
-                ? "bg-teal-700 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                ? "bg-[#7B5FB8] text-white"
+                : "bg-[#3E2868] text-[#B0A8C0] hover:bg-[#553888]"
             }`}
           >
             {s.replace(/_/g, " ")}
@@ -366,13 +366,13 @@ function LeadsContent() {
       </div>
 
       {/* Table */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+      <div className="bg-[#2A1A4A] border border-[#3E2868] rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800">
+              <tr className="border-b border-[#3E2868]">
                 {["Name", "Phone", "Status", "Source", "Therapist", "Created", ""].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-[#8B7AA0] uppercase tracking-wide">
                     {h}
                   </th>
                 ))}
@@ -381,7 +381,7 @@ function LeadsContent() {
             <tbody>
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} className="border-b border-gray-800/50">
+                  <tr key={i} className="border-b border-[#3E2868]/50">
                     {Array.from({ length: 7 }).map((_, j) => (
                       <td key={j} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td>
                     ))}
@@ -389,23 +389,23 @@ function LeadsContent() {
                 ))
               ) : leads.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-gray-500">No leads found</td>
+                  <td colSpan={7} className="px-4 py-12 text-center text-[#8B7AA0]">No leads found</td>
                 </tr>
               ) : (
                 leads.map((lead) => (
                   <tr
                     key={lead.id}
-                    className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors cursor-pointer"
+                    className="border-b border-[#3E2868]/50 hover:bg-[#3E2868]/30 transition-colors cursor-pointer"
                     onClick={() => setSelectedLead(lead)}
                   >
-                    <td className="px-4 py-3 font-medium text-gray-200 whitespace-nowrap">{lead.full_name}</td>
-                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{lead.whatsapp_number ?? lead.phone}</td>
+                    <td className="px-4 py-3 font-medium text-[#E0D5FF] whitespace-nowrap">{lead.full_name}</td>
+                    <td className="px-4 py-3 text-[#B0A8C0] whitespace-nowrap">{lead.whatsapp_number ?? lead.phone}</td>
                     <td className="px-4 py-3"><StatusBadge status={lead.status} /></td>
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{lead.source ?? "—"}</td>
-                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{lead.therapists?.full_name ?? <span className="text-gray-600">—</span>}</td>
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(lead.created_at)}</td>
+                    <td className="px-4 py-3 text-[#8B7AA0] whitespace-nowrap">{lead.source ?? "—"}</td>
+                    <td className="px-4 py-3 text-[#B0A8C0] whitespace-nowrap">{lead.therapists?.full_name ?? <span className="text-[#6B5A8A]">—</span>}</td>
+                    <td className="px-4 py-3 text-[#8B7AA0] whitespace-nowrap">{fmtDate(lead.created_at)}</td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-teal-400">Open →</span>
+                      <span className="text-xs text-[#A78BDE]">Open →</span>
                     </td>
                   </tr>
                 ))
@@ -416,22 +416,22 @@ function LeadsContent() {
 
         {/* Pagination */}
         {total > 50 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800">
-            <span className="text-xs text-gray-500">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#3E2868]">
+            <span className="text-xs text-[#8B7AA0]">
               Showing {(page - 1) * 50 + 1}–{Math.min(page * 50, total)} of {total}
             </span>
             <div className="flex gap-2">
               <button
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
-                className="rounded-lg bg-gray-800 hover:bg-gray-700 px-3 py-1.5 text-xs text-gray-300 disabled:opacity-40 transition-colors"
+                className="rounded-lg bg-[#3E2868] hover:bg-[#553888] px-3 py-1.5 text-xs text-[#C4B5F0] disabled:opacity-40 transition-colors"
               >
                 ← Prev
               </button>
               <button
                 disabled={page * 50 >= total}
                 onClick={() => setPage(page + 1)}
-                className="rounded-lg bg-gray-800 hover:bg-gray-700 px-3 py-1.5 text-xs text-gray-300 disabled:opacity-40 transition-colors"
+                className="rounded-lg bg-[#3E2868] hover:bg-[#553888] px-3 py-1.5 text-xs text-[#C4B5F0] disabled:opacity-40 transition-colors"
               >
                 Next →
               </button>
@@ -455,7 +455,7 @@ function LeadsContent() {
 
 export default function AdminLeadsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-gray-400">Loading…</div>}>
+    <Suspense fallback={<div className="p-8 text-[#B0A8C0]">Loading…</div>}>
       <LeadsContent />
     </Suspense>
   );

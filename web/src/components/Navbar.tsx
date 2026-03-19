@@ -9,14 +9,14 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-[#FFF8F0]/95 backdrop-blur-sm border-b border-[#1B6B6B]/10">
+    <header className="sticky top-0 z-50 bg-[#F8F5FF]/95 backdrop-blur-sm border-b border-[#7B5FB8]/10">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <LotusIcon className="h-8 w-8 text-[#1B6B6B] transition-transform group-hover:scale-110" />
+          <LotusIcon className="h-8 w-8 text-[#7B5FB8] transition-transform group-hover:scale-110" />
           <span
-            className="text-xl font-semibold text-[#1B6B6B] tracking-tight"
-            style={{ fontFamily: "var(--font-inter)" }}
+            className="text-xl font-semibold text-[#7B5FB8] tracking-tight"
+            style={{ fontFamily: "'Outfit', sans-serif" }}
           >
             India Therapist
           </span>
@@ -28,7 +28,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-gray-600 hover:text-[#1B6B6B] transition-colors"
+              className="text-sm font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
             >
               {link.label}
             </Link>
@@ -39,7 +39,7 @@ export default function Navbar() {
         <div className="hidden md:block">
           <Link
             href="/book"
-            className="inline-flex items-center rounded-full bg-[#1B6B6B] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#134F4F] transition-colors"
+            className="inline-flex items-center rounded-full bg-[#7B5FB8] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#6B4AA0] transition-colors"
           >
             Get Started
           </Link>
@@ -48,7 +48,7 @@ export default function Navbar() {
         {/* Mobile hamburger */}
         <button
           onClick={() => setOpen(!open)}
-          className="md:hidden p-2 text-[#1B6B6B] rounded-md hover:bg-[#1B6B6B]/10 transition-colors"
+          className="md:hidden p-2 text-[#7B5FB8] rounded-md hover:bg-[#7B5FB8]/10 transition-colors"
           aria-label="Toggle menu"
         >
           {open ? (
@@ -65,14 +65,14 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden border-t border-[#1B6B6B]/10 bg-[#FFF8F0] px-4 pb-4 pt-2">
+        <div className="md:hidden border-t border-[#7B5FB8]/10 bg-[#F8F5FF] px-4 pb-4 pt-2">
           <div className="flex flex-col gap-3">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="py-2 text-base font-medium text-gray-600 hover:text-[#1B6B6B] transition-colors"
+                className="py-2 text-base font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
               >
                 {link.label}
               </Link>
@@ -80,7 +80,7 @@ export default function Navbar() {
             <Link
               href="/book"
               onClick={() => setOpen(false)}
-              className="mt-2 inline-flex items-center justify-center rounded-full bg-[#1B6B6B] px-5 py-3 text-sm font-semibold text-white hover:bg-[#134F4F] transition-colors"
+              className="mt-2 inline-flex items-center justify-center rounded-full bg-[#7B5FB8] px-5 py-3 text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors"
             >
               Get Started
             </Link>

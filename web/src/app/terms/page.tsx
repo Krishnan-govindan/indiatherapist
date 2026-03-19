@@ -11,16 +11,16 @@ export default function TermsPage() {
   return (
     <main className="min-h-screen bg-white text-gray-800">
       {/* Header */}
-      <header className="bg-[#0d3b2e] text-white py-10 px-6 text-center">
+      <header className="bg-[#2A1A4A] text-white py-10 px-6 text-center">
         <h1 className="text-3xl font-bold mb-2">Terms of Service</h1>
-        <p className="text-green-200 text-sm">Last updated: March 2026</p>
+        <p className="text-[#C4B5F0] text-sm">Last updated: March 2026</p>
       </header>
 
       {/* Content */}
       <div className="max-w-3xl mx-auto px-6 py-12 space-y-8 text-[15px] leading-relaxed">
 
         <section>
-          <h2 className="text-xl font-semibold text-[#0d3b2e] mb-3">1. Acceptance of Terms</h2>
+          <h2 className="text-xl font-semibold text-[#2A1A4A] mb-3">1. Acceptance of Terms</h2>
           <p>
             By accessing or using India Therapist (<strong>indiatherapist.com</strong>), you
             agree to be bound by these Terms of Service. If you do not agree, please do not
@@ -30,7 +30,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[#0d3b2e] mb-3">2. Our Services</h2>
+          <h2 className="text-xl font-semibold text-[#2A1A4A] mb-3">2. Our Services</h2>
           <p>
             India Therapist is a <strong>therapy matchmaking platform</strong> that connects
             NRIs and people of Indian origin worldwide with qualified therapists based in India.
@@ -40,7 +40,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[#0d3b2e] mb-3">3. Eligibility</h2>
+          <h2 className="text-xl font-semibold text-[#2A1A4A] mb-3">3. Eligibility</h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>You must be at least 18 years old to use our services.</li>
             <li>Our services are not a substitute for emergency mental health care. If you are in crisis, please contact your local emergency services immediately.</li>
@@ -48,7 +48,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[#0d3b2e] mb-3">4. Bookings &amp; Payments</h2>
+          <h2 className="text-xl font-semibold text-[#2A1A4A] mb-3">4. Bookings &amp; Payments</h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>Session fees are displayed clearly before booking and are charged in USD.</li>
             <li>Payments are processed securely through Stripe.</li>
@@ -58,7 +58,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[#0d3b2e] mb-3">5. WhatsApp Communications</h2>
+          <h2 className="text-xl font-semibold text-[#2A1A4A] mb-3">5. WhatsApp Communications</h2>
           <p>
             By submitting your phone number, you consent to receiving WhatsApp messages from
             India Therapist regarding your therapy inquiry, session confirmations, and reminders.
@@ -67,7 +67,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[#0d3b2e] mb-3">6. Disclaimer</h2>
+          <h2 className="text-xl font-semibold text-[#2A1A4A] mb-3">6. Disclaimer</h2>
           <p>
             India Therapist connects clients with therapists but does not directly provide
             therapy services. We are not responsible for the content of sessions or outcomes
@@ -77,7 +77,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[#0d3b2e] mb-3">7. Limitation of Liability</h2>
+          <h2 className="text-xl font-semibold text-[#2A1A4A] mb-3">7. Limitation of Liability</h2>
           <p>
             To the maximum extent permitted by law, India Therapist shall not be liable for
             any indirect, incidental, or consequential damages arising from use of our platform
@@ -86,7 +86,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[#0d3b2e] mb-3">8. Governing Law</h2>
+          <h2 className="text-xl font-semibold text-[#2A1A4A] mb-3">8. Governing Law</h2>
           <p>
             These Terms are governed by the laws of India. Any disputes shall be subject to
             the exclusive jurisdiction of courts in India.
@@ -94,11 +94,11 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[#0d3b2e] mb-3">9. Contact</h2>
+          <h2 className="text-xl font-semibold text-[#2A1A4A] mb-3">9. Contact</h2>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-1">
             <p><strong>India Therapist / Neo Happylyf Mind Care</strong></p>
             <p>Email:{" "}
-              <a href="mailto:support@indiatherapist.com" className="text-green-700 underline">
+              <a href="mailto:support@indiatherapist.com" className="text-[#7B5FB8] underline">
                 support@indiatherapist.com
               </a>
             </p>
@@ -109,7 +109,7 @@ export default function TermsPage() {
         <div className="border-t pt-6 text-center text-sm text-gray-500">
           <p>
             Also see our{" "}
-            <Link href="/privacy" className="text-green-700 underline">
+            <Link href="/privacy" className="text-[#7B5FB8] underline">
               Privacy Policy
             </Link>
           </p>

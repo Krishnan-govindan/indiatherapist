@@ -167,20 +167,20 @@ function MatchCard({ t }: { t: MatchedTherapist }) {
   const initials = t.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("");
   return (
     <div className="rounded-xl bg-white border border-gray-100 p-4 shadow-sm flex items-start gap-3">
-      <div className="h-12 w-12 rounded-full bg-[#1B6B6B]/10 flex items-center justify-center shrink-0">
-        <span className="text-sm font-semibold text-[#1B6B6B]">{initials}</span>
+      <div className="h-12 w-12 rounded-full bg-[#7B5FB8]/10 flex items-center justify-center shrink-0">
+        <span className="text-sm font-semibold text-[#7B5FB8]">{initials}</span>
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           <p className="font-semibold text-gray-900 text-sm">{t.full_name}</p>
-          <span className="text-xs rounded-full bg-[#1B6B6B]/10 text-[#1B6B6B] px-2 py-0.5">{t.tier}</span>
+          <span className="text-xs rounded-full bg-[#7B5FB8]/10 text-[#7B5FB8] px-2 py-0.5">{t.tier}</span>
         </div>
         <p className="text-xs text-gray-500 mt-0.5">{t.specialties.slice(0, 2).join(" · ")}</p>
         <p className="text-xs text-gray-400 mt-0.5">🗣 {t.languages.join(" · ")}</p>
       </div>
       <Link
         href={`/therapists/${t.slug}`}
-        className="shrink-0 rounded-full bg-[#1B6B6B] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#134F4F] transition-colors"
+        className="shrink-0 rounded-full bg-[#7B5FB8] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#6B4AA0] transition-colors"
       >
         View
       </Link>
@@ -318,13 +318,13 @@ export default function BookPage() {
 
   if (submitted) {
     return (
-      <main className="min-h-screen bg-[#FFF8F0] flex flex-col items-center justify-start py-16 px-4">
+      <main className="min-h-screen bg-[#F8F5FF] flex flex-col items-center justify-start py-16 px-4">
         <div className="w-full max-w-lg">
           <div className="text-center mb-8">
             <div className="text-6xl mb-4">🎉</div>
             <h1
               className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3"
-              style={{ fontFamily: "var(--font-playfair)" }}
+              style={{ fontFamily: "'Outfit', sans-serif" }}
             >
               We&apos;re on it!
             </h1>
@@ -363,7 +363,7 @@ export default function BookPage() {
           <div className="mt-8 text-center">
             <Link
               href="/therapists"
-              className="text-sm text-[#1B6B6B] hover:underline"
+              className="text-sm text-[#7B5FB8] hover:underline"
             >
               Browse all therapists →
             </Link>
@@ -384,7 +384,7 @@ export default function BookPage() {
     : "opacity-100 translate-x-0";
 
   return (
-    <main className="min-h-screen bg-[#FFF8F0] py-10 px-4">
+    <main className="min-h-screen bg-[#F8F5FF] py-10 px-4">
       <div className="mx-auto max-w-xl">
 
         {/* Progress header */}
@@ -394,7 +394,7 @@ export default function BookPage() {
           </Link>
           <h1
             className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1"
-            style={{ fontFamily: "var(--font-playfair)" }}
+            style={{ fontFamily: "'Outfit', sans-serif" }}
           >
             Find Your Therapist
           </h1>
@@ -408,7 +408,7 @@ export default function BookPage() {
               <div
                 key={i}
                 className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                  i <= step ? "bg-[#1B6B6B]" : "bg-gray-200"
+                  i <= step ? "bg-[#7B5FB8]" : "bg-gray-200"
                 }`}
               />
             ))}
@@ -452,7 +452,7 @@ export default function BookPage() {
                         render={({ field }) => (
                           <select
                             {...field}
-                            className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1B6B6B]/30 w-24 shrink-0"
+                            className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/30 w-24 shrink-0"
                           >
                             {COUNTRY_CODES.map((c) => (
                               <option key={`${c.flag}${c.code}`} value={c.code}>
@@ -518,7 +518,7 @@ export default function BookPage() {
                               onClick={() => field.onChange(o.value)}
                               className={`rounded-xl border-2 p-3 text-left transition-all ${
                                 field.value === o.value
-                                  ? "border-[#1B6B6B] bg-[#1B6B6B]/5"
+                                  ? "border-[#7B5FB8] bg-[#7B5FB8]/5"
                                   : "border-gray-200 hover:border-gray-300"
                               }`}
                             >
@@ -553,8 +553,8 @@ export default function BookPage() {
                                 }
                                 className={`rounded-full px-3 py-1.5 text-sm font-medium border transition-all ${
                                   active
-                                    ? "bg-[#1B6B6B] text-white border-[#1B6B6B]"
-                                    : "bg-white text-gray-600 border-gray-200 hover:border-[#1B6B6B]"
+                                    ? "bg-[#7B5FB8] text-white border-[#7B5FB8]"
+                                    : "bg-white text-gray-600 border-gray-200 hover:border-[#7B5FB8]"
                                 }`}
                               >
                                 {c}
@@ -578,7 +578,7 @@ export default function BookPage() {
                               key={o.value}
                               className={`flex items-center gap-3 rounded-xl border-2 p-3 cursor-pointer transition-all ${
                                 field.value === o.value
-                                  ? "border-[#1B6B6B] bg-[#1B6B6B]/5"
+                                  ? "border-[#7B5FB8] bg-[#7B5FB8]/5"
                                   : "border-gray-200 hover:border-gray-300"
                               }`}
                             >
@@ -588,7 +588,7 @@ export default function BookPage() {
                                 value={o.value}
                                 checked={field.value === o.value}
                                 onChange={() => field.onChange(o.value)}
-                                className="accent-[#1B6B6B]"
+                                className="accent-[#7B5FB8]"
                               />
                               <span className="text-sm font-medium text-gray-800">{o.label}</span>
                             </label>
@@ -610,7 +610,7 @@ export default function BookPage() {
                               key={o.value}
                               className={`flex items-center justify-between rounded-xl border-2 p-3 cursor-pointer transition-all ${
                                 field.value === o.value
-                                  ? "border-[#1B6B6B] bg-[#1B6B6B]/5"
+                                  ? "border-[#7B5FB8] bg-[#7B5FB8]/5"
                                   : "border-gray-200 hover:border-gray-300"
                               }`}
                             >
@@ -621,7 +621,7 @@ export default function BookPage() {
                                   value={o.value}
                                   checked={field.value === o.value}
                                   onChange={() => field.onChange(o.value)}
-                                  className="accent-[#1B6B6B]"
+                                  className="accent-[#7B5FB8]"
                                 />
                                 <span className="text-sm font-medium text-gray-800">{o.label}</span>
                               </div>
@@ -664,8 +664,8 @@ export default function BookPage() {
                                 }
                                 className={`rounded-full px-3 py-1.5 text-sm font-medium border transition-all ${
                                   active
-                                    ? "bg-[#1B6B6B] text-white border-[#1B6B6B]"
-                                    : "bg-white text-gray-600 border-gray-200 hover:border-[#1B6B6B]"
+                                    ? "bg-[#7B5FB8] text-white border-[#7B5FB8]"
+                                    : "bg-white text-gray-600 border-gray-200 hover:border-[#7B5FB8]"
                                 }`}
                               >
                                 {lang}
@@ -691,7 +691,7 @@ export default function BookPage() {
                                 key={o.value}
                                 className={`flex items-center gap-3 rounded-xl border-2 p-3 cursor-pointer transition-all ${
                                   active
-                                    ? "border-[#1B6B6B] bg-[#1B6B6B]/5"
+                                    ? "border-[#7B5FB8] bg-[#7B5FB8]/5"
                                     : "border-gray-200 hover:border-gray-300"
                                 }`}
                               >
@@ -705,7 +705,7 @@ export default function BookPage() {
                                         : [...field.value, o.value]
                                     )
                                   }
-                                  className="accent-[#1B6B6B] h-4 w-4"
+                                  className="accent-[#7B5FB8] h-4 w-4"
                                 />
                                 <span className="text-sm font-medium text-gray-800">{o.label}</span>
                               </label>
@@ -768,7 +768,7 @@ export default function BookPage() {
                             onChange={(e) =>
                               field.onChange(e.target.checked ? true : undefined)
                             }
-                            className="accent-[#1B6B6B] h-4 w-4 mt-0.5 shrink-0"
+                            className="accent-[#7B5FB8] h-4 w-4 mt-0.5 shrink-0"
                           />
                           <span className="text-sm text-gray-600 leading-relaxed">
                             I agree that this platform connects me with therapists and is{" "}
@@ -787,7 +787,7 @@ export default function BookPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full rounded-full bg-[#1B6B6B] px-6 py-3.5 text-base font-semibold text-white hover:bg-[#134F4F] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full rounded-full bg-[#7B5FB8] px-6 py-3.5 text-base font-semibold text-white hover:bg-[#6B4AA0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {submitting ? (
                       <span className="flex items-center justify-center gap-2">
@@ -824,7 +824,7 @@ export default function BookPage() {
                 <button
                   type="button"
                   onClick={goNext}
-                  className="flex-1 rounded-full bg-[#1B6B6B] px-6 py-3 text-sm font-semibold text-white hover:bg-[#134F4F] transition-colors"
+                  className="flex-1 rounded-full bg-[#7B5FB8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors"
                 >
                   Continue →
                 </button>
@@ -845,7 +845,7 @@ function StepHeading({ children }: { children: React.ReactNode }) {
   return (
     <h2
       className="text-xl font-bold text-gray-900 mb-1"
-      style={{ fontFamily: "var(--font-playfair)" }}
+      style={{ fontFamily: "'Outfit', sans-serif" }}
     >
       {children}
     </h2>
@@ -885,5 +885,5 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 function inputCls(hasError: boolean) {
   return `w-full rounded-xl border ${
     hasError ? "border-red-300 ring-1 ring-red-300" : "border-gray-200"
-  } px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B6B6B]/30`;
+  } px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/30`;
 }

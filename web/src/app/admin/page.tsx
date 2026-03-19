@@ -37,7 +37,7 @@ interface RecentLead {
 // ─────────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, string> = {
-  new:          "bg-gray-700 text-gray-200",
+  new:          "bg-[#3E2868] text-[#E0D5FF]",
   voice_called: "bg-blue-900 text-blue-200",
   qualified:    "bg-purple-900 text-purple-200",
   matched:      "bg-orange-900 text-orange-200",
@@ -48,7 +48,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[status] ?? "bg-gray-700 text-gray-200"}`}>
+    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[status] ?? "bg-[#3E2868] text-[#E0D5FF]"}`}>
       {status.replace(/_/g, " ")}
     </span>
   );
@@ -67,8 +67,8 @@ function MetricCard({
   trend?: number;
 }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">{label}</p>
+    <div className="bg-[#2A1A4A] border border-[#3E2868] rounded-2xl p-5">
+      <p className="text-xs font-medium text-[#B0A8C0] uppercase tracking-wide mb-2">{label}</p>
       <p className="text-2xl font-bold text-white mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {trend !== undefined && (
@@ -76,7 +76,7 @@ function MetricCard({
             {trend >= 0 ? "▲" : "▼"} {Math.abs(trend)}%
           </span>
         )}
-        {sub && <span className="text-xs text-gray-500">{sub}</span>}
+        {sub && <span className="text-xs text-[#8B7AA0]">{sub}</span>}
       </div>
     </div>
   );
@@ -87,7 +87,7 @@ function MetricCard({
 // ─────────────────────────────────────────────────────────────
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`bg-gray-800 animate-pulse rounded-xl ${className ?? ""}`} />;
+  return <div className={`bg-[#3E2868] animate-pulse rounded-xl ${className ?? ""}`} />;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -120,13 +120,13 @@ export default function AdminOverviewPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Overview</h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-[#B0A8C0] text-sm mt-1">
           {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-xl bg-red-950 border border-red-800 px-4 py-3 text-sm text-red-300">
+        <div className="mb-6 rounded-xl bg-[#3E1030] border border-[#D45050]/30 px-4 py-3 text-sm text-[#D45050]">
           {error}
         </div>
       )}
@@ -173,22 +173,22 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Weekly bar chart */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-8">
+      <div className="bg-[#2A1A4A] border border-[#3E2868] rounded-2xl p-6 mb-8">
         <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-5">
           Leads by Week (last 8 weeks)
         </h2>
         {stats ? (
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={stats.weekly_leads} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-              <XAxis dataKey="week" tick={{ fill: "#9CA3AF", fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#9CA3AF", fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#3E2868" vertical={false} />
+              <XAxis dataKey="week" tick={{ fill: "#8B7AA0", fontSize: 12 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: "#8B7AA0", fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
               <Tooltip
-                contentStyle={{ background: "#1F2937", border: "1px solid #374151", borderRadius: 8 }}
-                labelStyle={{ color: "#F9FAFB", fontSize: 12 }}
-                itemStyle={{ color: "#5EEAD4" }}
+                contentStyle={{ background: "#2A1A4A", border: "1px solid #3E2868", borderRadius: 8 }}
+                labelStyle={{ color: "#F8F5FF", fontSize: 12 }}
+                itemStyle={{ color: "#A78BDE" }}
               />
-              <Bar dataKey="count" fill="#0D9488" radius={[4, 4, 0, 0]} name="Leads" />
+              <Bar dataKey="count" fill="#7B5FB8" radius={[4, 4, 0, 0]} name="Leads" />
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -197,14 +197,14 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Recent leads table */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+      <div className="bg-[#2A1A4A] border border-[#3E2868] rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#3E2868]">
           <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
             Recent Leads
           </h2>
           <Link
             href="/admin/leads"
-            className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
+            className="text-xs text-[#A78BDE] hover:text-[#C4B5F0] transition-colors"
           >
             View all →
           </Link>
@@ -212,11 +212,11 @@ export default function AdminOverviewPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800">
+              <tr className="border-b border-[#3E2868]">
                 {["Name", "Status", "Therapist", "Source", "Created", ""].map((h) => (
                   <th
                     key={h}
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide"
+                    className="px-4 py-3 text-left text-xs font-medium text-[#8B7AA0] uppercase tracking-wide"
                   >
                     {h}
                   </th>
@@ -227,28 +227,28 @@ export default function AdminOverviewPage() {
               {stats ? (
                 stats.recent_leads.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500 text-sm">
+                    <td colSpan={6} className="px-4 py-8 text-center text-[#8B7AA0] text-sm">
                       No leads yet
                     </td>
                   </tr>
                 ) : (
                   stats.recent_leads.map((lead) => (
-                    <tr key={lead.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
-                      <td className="px-4 py-3 font-medium text-gray-200 whitespace-nowrap">
+                    <tr key={lead.id} className="border-b border-[#3E2868]/50 hover:bg-[#3E2868]/30 transition-colors">
+                      <td className="px-4 py-3 font-medium text-[#E0D5FF] whitespace-nowrap">
                         {lead.full_name}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={lead.status} />
                       </td>
-                      <td className="px-4 py-3 text-gray-400 whitespace-nowrap">
-                        {lead.therapists?.full_name ?? <span className="text-gray-600">—</span>}
+                      <td className="px-4 py-3 text-[#B0A8C0] whitespace-nowrap">
+                        {lead.therapists?.full_name ?? <span className="text-[#6B5A8A]">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{lead.source ?? "—"}</td>
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(lead.created_at)}</td>
+                      <td className="px-4 py-3 text-[#8B7AA0] whitespace-nowrap">{lead.source ?? "—"}</td>
+                      <td className="px-4 py-3 text-[#8B7AA0] whitespace-nowrap">{fmtDate(lead.created_at)}</td>
                       <td className="px-4 py-3">
                         <Link
                           href={`/admin/leads?id=${lead.id}`}
-                          className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
+                          className="text-xs text-[#A78BDE] hover:text-[#C4B5F0] transition-colors"
                         >
                           View
                         </Link>
@@ -258,7 +258,7 @@ export default function AdminOverviewPage() {
                 )
               ) : (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-gray-800/50">
+                  <tr key={i} className="border-b border-[#3E2868]/50">
                     {Array.from({ length: 6 }).map((_, j) => (
                       <td key={j} className="px-4 py-3">
                         <Skeleton className="h-4 w-full" />

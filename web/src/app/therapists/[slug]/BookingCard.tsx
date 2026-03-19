@@ -122,7 +122,7 @@ export default function BookingCard({
             href={paymentUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full rounded-full bg-[#1B6B6B] px-6 py-3 text-center text-sm font-semibold text-white hover:bg-[#134F4F] transition-colors"
+            className="block w-full rounded-full bg-[#7B5FB8] px-6 py-3 text-center text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors"
           >
             Complete Payment →
           </a>
@@ -140,7 +140,7 @@ export default function BookingCard({
               value={form.full_name}
               onChange={updateField("full_name")}
               placeholder="Your full name"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B6B6B]/30"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/30"
             />
           </div>
 
@@ -153,7 +153,7 @@ export default function BookingCard({
               value={form.email}
               onChange={updateField("email")}
               placeholder="your@email.com"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B6B6B]/30"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/30"
             />
           </div>
 
@@ -167,7 +167,7 @@ export default function BookingCard({
               value={form.phone}
               onChange={updateField("phone")}
               placeholder="+1 555 000 0000"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B6B6B]/30"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/30"
             />
           </div>
 
@@ -180,7 +180,7 @@ export default function BookingCard({
               value={form.concern}
               onChange={updateField("concern")}
               placeholder="Briefly describe what you'd like to work on…"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B6B6B]/30 resize-none"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7B5FB8]/30 resize-none"
             />
           </div>
 
@@ -193,7 +193,7 @@ export default function BookingCard({
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-full bg-[#1B6B6B] px-6 py-3 text-sm font-semibold text-white hover:bg-[#134F4F] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full rounded-full bg-[#7B5FB8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting ? "Submitting…" : "Continue to Payment →"}
           </button>
@@ -211,7 +211,7 @@ export default function BookingCard({
         <div className="space-y-3">
           <button
             onClick={() => setShowForm(true)}
-            className="w-full rounded-full bg-[#1B6B6B] px-6 py-3 text-sm font-semibold text-white hover:bg-[#134F4F] transition-colors"
+            className="w-full rounded-full bg-[#7B5FB8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors"
           >
             Book a Session
           </button>

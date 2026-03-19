@@ -46,9 +46,9 @@ function EditableCell({
     return (
       <button
         onClick={() => setEditing(true)}
-        className="text-left text-gray-300 hover:text-white hover:underline decoration-dashed underline-offset-2 transition-colors"
+        className="text-left text-[#C4B5F0] hover:text-white hover:underline decoration-dashed underline-offset-2 transition-colors"
       >
-        {value || <span className="text-gray-600">—</span>}
+        {value || <span className="text-[#6B5A8A]">—</span>}
       </button>
     );
   }
@@ -61,7 +61,7 @@ function EditableCell({
       onChange={(e) => setLocal(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => { if (e.key === "Enter") commit(); if (e.key === "Escape") setEditing(false); }}
-      className="bg-gray-700 border border-teal-500/50 rounded px-2 py-0.5 text-sm text-white focus:outline-none w-40"
+      className="bg-[#553888] border border-[#7B5FB8]/50 rounded px-2 py-0.5 text-sm text-white focus:outline-none w-40"
     />
   );
 }
@@ -71,7 +71,7 @@ function EditableCell({
 // ─────────────────────────────────────────────────────────────
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`bg-gray-800 animate-pulse rounded-lg ${className ?? ""}`} />;
+  return <div className={`bg-[#3E2868] animate-pulse rounded-lg ${className ?? ""}`} />;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -123,24 +123,24 @@ export default function AdminTherapistsPage() {
     <div className="p-6 lg:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Therapists</h1>
-        <p className="text-gray-400 text-sm mt-0.5">
+        <p className="text-[#B0A8C0] text-sm mt-0.5">
           {therapists.length} total · {therapists.filter((t) => t.is_active).length} active
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-xl bg-red-950 border border-red-800 px-4 py-3 text-sm text-red-300">
+        <div className="mb-6 rounded-xl bg-[#3E1030] border border-[#D45050]/30 px-4 py-3 text-sm text-[#D45050]">
           {error}
         </div>
       )}
 
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+      <div className="bg-[#2A1A4A] border border-[#3E2868] rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800">
+              <tr className="border-b border-[#3E2868]">
                 {["Active", "Name", "Tier", "Rate", "Sessions", "Revenue", "Languages", "WA Number"].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-[#8B7AA0] uppercase tracking-wide whitespace-nowrap">
                     {h}
                   </th>
                 ))}
@@ -149,7 +149,7 @@ export default function AdminTherapistsPage() {
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i} className="border-b border-gray-800/50">
+                  <tr key={i} className="border-b border-[#3E2868]/50">
                     {Array.from({ length: 8 }).map((_, j) => (
                       <td key={j} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td>
                     ))}
@@ -157,17 +157,17 @@ export default function AdminTherapistsPage() {
                 ))
               ) : therapists.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-gray-500">No therapists found</td>
+                  <td colSpan={8} className="px-4 py-12 text-center text-[#8B7AA0]">No therapists found</td>
                 </tr>
               ) : (
                 therapists.map((t) => (
-                  <tr key={t.id} className="border-b border-gray-800/50 hover:bg-gray-800/20 transition-colors">
+                  <tr key={t.id} className="border-b border-[#3E2868]/50 hover:bg-[#3E2868]/20 transition-colors">
                     {/* Active toggle */}
                     <td className="px-4 py-3">
                       <button
                         onClick={() => toggleActive(t)}
                         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                          t.is_active ? "bg-teal-600" : "bg-gray-700"
+                          t.is_active ? "bg-[#7B5FB8]" : "bg-[#553888]"
                         }`}
                         title={t.is_active ? "Active — click to deactivate" : "Inactive — click to activate"}
                       >
@@ -192,7 +192,7 @@ export default function AdminTherapistsPage() {
                       <select
                         value={t.tier}
                         onChange={(e) => patchTherapist(t.id, { tier: e.target.value })}
-                        className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:ring-1 focus:ring-teal-500/40"
+                        className="bg-[#3E2868] border border-[#553888] rounded-lg px-2 py-1 text-xs text-[#C4B5F0] focus:outline-none focus:ring-1 focus:ring-[#7B5FB8]/40"
                       >
                         <option value="premium">Premium</option>
                         <option value="elite">Elite</option>
@@ -209,18 +209,18 @@ export default function AdminTherapistsPage() {
                     </td>
 
                     {/* Sessions this month */}
-                    <td className="px-4 py-3 text-gray-300 text-center">{t.sessions_this_month}</td>
+                    <td className="px-4 py-3 text-[#C4B5F0] text-center">{t.sessions_this_month}</td>
 
                     {/* Revenue this month */}
-                    <td className="px-4 py-3 text-gray-300 whitespace-nowrap">
-                      {t.revenue_this_month_cents > 0 ? fmt$(t.revenue_this_month_cents) : <span className="text-gray-600">—</span>}
+                    <td className="px-4 py-3 text-[#C4B5F0] whitespace-nowrap">
+                      {t.revenue_this_month_cents > 0 ? fmt$(t.revenue_this_month_cents) : <span className="text-[#6B5A8A]">—</span>}
                     </td>
 
                     {/* Languages */}
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {(t.languages ?? []).map((l) => (
-                          <span key={l} className="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-400">{l}</span>
+                          <span key={l} className="rounded-full bg-[#3E2868] px-2 py-0.5 text-xs text-[#B0A8C0]">{l}</span>
                         ))}
                       </div>
                     </td>
@@ -240,7 +240,7 @@ export default function AdminTherapistsPage() {
         </div>
       </div>
 
-      <p className="mt-3 text-xs text-gray-600">
+      <p className="mt-3 text-xs text-[#6B5A8A]">
         💡 Click any cell to edit inline. Toggle the switch to activate/deactivate a therapist.
       </p>
     </div>

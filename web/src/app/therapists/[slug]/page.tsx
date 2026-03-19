@@ -152,9 +152,9 @@ function AvatarInitials({ name, large }: { name: string; large?: boolean }) {
   const size = large ? "h-28 w-28 sm:h-36 sm:w-36 text-4xl sm:text-5xl" : "h-16 w-16 text-xl";
   return (
     <div
-      className={`${size} rounded-full bg-[#1B6B6B]/10 flex items-center justify-center shrink-0`}
+      className={`${size} rounded-full bg-[#7B5FB8]/10 flex items-center justify-center shrink-0`}
     >
-      <span className={`font-semibold text-[#1B6B6B]`}>{initials}</span>
+      <span className={`font-semibold text-[#7B5FB8]`}>{initials}</span>
     </div>
   );
 }
@@ -173,7 +173,7 @@ export default async function TherapistProfilePage({
 
   if (!therapist) {
     return (
-      <main className="min-h-screen bg-[#FFF8F0] flex items-center justify-center px-4">
+      <main className="min-h-screen bg-[#F8F5FF] flex items-center justify-center px-4">
         <div className="text-center">
           <div className="text-5xl mb-4">🔍</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Therapist not found</h1>
@@ -182,7 +182,7 @@ export default async function TherapistProfilePage({
           </p>
           <Link
             href="/therapists"
-            className="rounded-full bg-[#1B6B6B] px-6 py-3 text-sm font-semibold text-white hover:bg-[#134F4F] transition-colors"
+            className="rounded-full bg-[#7B5FB8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors"
           >
             Browse All Therapists
           </Link>
@@ -231,16 +231,16 @@ export default async function TherapistProfilePage({
       {/* JSON-LD */}
       <JsonLd schema={jsonLd} />
 
-      <main className="min-h-screen bg-[#FFF8F0]">
+      <main className="min-h-screen bg-[#F8F5FF]">
         {/* ── Breadcrumb ───────────────────────────────────── */}
         <div className="bg-white border-b border-gray-100">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
             <nav className="text-sm text-gray-500 flex items-center gap-2">
-              <Link href="/" className="hover:text-[#1B6B6B] transition-colors">
+              <Link href="/" className="hover:text-[#7B5FB8] transition-colors">
                 Home
               </Link>
               <span>/</span>
-              <Link href="/therapists" className="hover:text-[#1B6B6B] transition-colors">
+              <Link href="/therapists" className="hover:text-[#7B5FB8] transition-colors">
                 Therapists
               </Link>
               <span>/</span>
@@ -277,13 +277,13 @@ export default async function TherapistProfilePage({
                     <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap mb-1">
                       <h1
                         className="text-2xl sm:text-3xl font-bold text-gray-900"
-                        style={{ fontFamily: "var(--font-playfair)" }}
+                        style={{ fontFamily: "'Outfit', sans-serif" }}
                       >
                         {therapist.full_name}
                       </h1>
                       <span
                         title="Verified therapist"
-                        className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#1B6B6B] text-white text-xs shrink-0"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#7B5FB8] text-white text-xs shrink-0"
                       >
                         ✓
                       </span>
@@ -294,7 +294,7 @@ export default async function TherapistProfilePage({
                       className={`inline-block mb-3 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
                         isElite
                           ? "bg-amber-100 text-amber-800"
-                          : "bg-[#1B6B6B]/10 text-[#1B6B6B]"
+                          : "bg-[#7B5FB8]/10 text-[#7B5FB8]"
                       }`}
                     >
                       {therapist.tier}
@@ -332,9 +332,9 @@ export default async function TherapistProfilePage({
                     )}
 
                     {/* Rate badge */}
-                    <div className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2">
-                      <span className="text-emerald-700 font-bold text-lg">${rate}</span>
-                      <span className="text-emerald-600 text-sm">per 60-min session</span>
+                    <div className="inline-flex items-center gap-2 rounded-xl bg-[#F0EBFF] border border-[#C4B5F0] px-4 py-2">
+                      <span className="text-[#7B5FB8] font-bold text-lg">${rate}</span>
+                      <span className="text-[#6B4AA0] text-sm">per 60-min session</span>
                     </div>
                   </div>
                 </div>
@@ -344,7 +344,7 @@ export default async function TherapistProfilePage({
               <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
                 <h2
                   className="text-xl font-bold text-gray-900 mb-4"
-                  style={{ fontFamily: "var(--font-playfair)" }}
+                  style={{ fontFamily: "'Outfit', sans-serif" }}
                 >
                   About
                 </h2>
@@ -387,7 +387,7 @@ export default async function TherapistProfilePage({
               <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
                 <h2
                   className="text-xl font-bold text-gray-900 mb-5"
-                  style={{ fontFamily: "var(--font-playfair)" }}
+                  style={{ fontFamily: "'Outfit', sans-serif" }}
                 >
                   Areas of Expertise
                 </h2>
@@ -395,7 +395,7 @@ export default async function TherapistProfilePage({
                   {therapist.specialties.map((s) => (
                     <span
                       key={s}
-                      className="rounded-full bg-[#D4A853]/15 px-3 py-1.5 text-sm font-medium text-[#8B6914]"
+                      className="rounded-full bg-[#A78BDE]/15 px-3 py-1.5 text-sm font-medium text-[#6B4AA0]"
                     >
                       {s}
                     </span>
@@ -412,7 +412,7 @@ export default async function TherapistProfilePage({
                       {therapist.therapy_types.map((t) => (
                         <span
                           key={t}
-                          className="rounded-full border border-[#1B6B6B]/30 bg-[#1B6B6B]/5 px-3 py-1.5 text-sm text-[#1B6B6B]"
+                          className="rounded-full border border-[#7B5FB8]/30 bg-[#7B5FB8]/5 px-3 py-1.5 text-sm text-[#7B5FB8]"
                         >
                           {t}
                         </span>
@@ -426,7 +426,7 @@ export default async function TherapistProfilePage({
               <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
                 <h2
                   className="text-xl font-bold text-gray-900 mb-4"
-                  style={{ fontFamily: "var(--font-playfair)" }}
+                  style={{ fontFamily: "'Outfit', sans-serif" }}
                 >
                   What to Expect
                 </h2>
@@ -447,7 +447,7 @@ export default async function TherapistProfilePage({
                   ].map((item) => (
                     <div
                       key={item.label}
-                      className="rounded-xl bg-[#FFF8F0] p-4 text-center"
+                      className="rounded-xl bg-[#F8F5FF] p-4 text-center"
                     >
                       <div className="text-2xl mb-1">{item.icon}</div>
                       <p className="font-semibold text-gray-900 text-sm">{item.label}</p>
@@ -481,7 +481,7 @@ export default async function TherapistProfilePage({
                 <div className="mt-6 text-center">
                   <Link
                     href="/therapists"
-                    className="text-sm text-[#1B6B6B] hover:underline"
+                    className="text-sm text-[#7B5FB8] hover:underline"
                   >
                     ← Browse other therapists
                   </Link>

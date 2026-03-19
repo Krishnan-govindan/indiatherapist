@@ -1,28 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme inline {
-  /* Brand colours */
-  --color-brand-teal:       #1B6B6B;
-  --color-brand-teal-light: #2A8A8A;
-  --color-brand-teal-dark:  #134F4F;
-  --color-brand-cream:      #FFF8F0;
-  --color-brand-cream-dark: #F5EDE0;
-  --color-brand-gold:       #D4A853;
-  --color-brand-gold-light: #E8C270;
+  /* Brand colours — Shanti Lavender Calm */
+  --color-primary-50:  #F8F5FF;
+  --color-primary-100: #F0EBFF;
+  --color-primary-200: #E0D5FF;
+  --color-primary-300: #C4B5F0;
+  --color-primary-400: #A78BDE;
+  --color-primary-500: #7B5FB8;
+  --color-primary-600: #6B4AA0;
+  --color-primary-700: #553888;
+  --color-primary-800: #3E2868;
+  --color-primary-900: #2A1A4A;
+
+  --color-neutral-50:  #FAFAFF;
+  --color-neutral-100: #F5F3FA;
+  --color-neutral-200: #EDEAF5;
+  --color-neutral-300: #D8D0E8;
+  --color-neutral-400: #B0A8C0;
+  --color-neutral-500: #8B7AA0;
+  --color-neutral-600: #6B5A8A;
+  --color-neutral-700: #4A3568;
+  --color-neutral-800: #2A1F4A;
+  --color-neutral-900: #1A1030;
 
   /* Typography */
-  --font-sans:  var(--font-inter);
-  --font-serif: var(--font-playfair);
+  --font-sans:  'Outfit', 'Poppins', 'Segoe UI', sans-serif;
+  --font-heading: 'Outfit', 'Poppins', 'Segoe UI', sans-serif;
 }
 
 :root {
-  --background: #FFF8F0;
-  --foreground: #1a1a1a;
+  --background: #F8F5FF;
+  --foreground: #1A1030;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: 'Outfit', 'Poppins', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
 }

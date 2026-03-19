@@ -19,13 +19,13 @@ export default async function TherapistsPreview() {
   const therapists = await fetchTherapists();
 
   return (
-    <section className="bg-[#FFF8F0] py-20 px-4 sm:px-6 lg:px-8">
+    <section className="bg-[#F8F5FF] py-20 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="text-center mb-12">
           <h2
             className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4"
-            style={{ fontFamily: "var(--font-playfair)" }}
+            style={{ fontFamily: "'Outfit', sans-serif" }}
           >
             Meet some of our therapists
           </h2>
@@ -52,8 +52,8 @@ export default async function TherapistsPreview() {
                     className="h-20 w-20 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-20 w-20 rounded-full bg-[#1B6B6B]/10 flex items-center justify-center">
-                    <span className="text-2xl font-semibold text-[#1B6B6B]">
+                  <div className="h-20 w-20 rounded-full bg-[#7B5FB8]/10 flex items-center justify-center">
+                    <span className="text-2xl font-semibold text-[#7B5FB8]">
                       {t.full_name
                         .split(" ")
                         .map((n) => n[0])
@@ -75,7 +75,7 @@ export default async function TherapistsPreview() {
                     className={`inline-block mt-1 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
                       t.tier === "elite"
                         ? "bg-amber-100 text-amber-800"
-                        : "bg-[#1B6B6B]/10 text-[#1B6B6B]"
+                        : "bg-[#7B5FB8]/10 text-[#7B5FB8]"
                     }`}
                   >
                     {t.tier}
@@ -88,7 +88,7 @@ export default async function TherapistsPreview() {
                 {t.specialties.slice(0, 3).map((s) => (
                   <span
                     key={s}
-                    className="rounded-full bg-[#D4A853]/15 px-2.5 py-0.5 text-xs font-medium text-[#8B6914]"
+                    className="rounded-full bg-[#A78BDE]/15 px-2.5 py-0.5 text-xs font-medium text-[#6B4AA0]"
                   >
                     {s}
                   </span>
@@ -110,7 +110,7 @@ export default async function TherapistsPreview() {
                 </span>
                 <Link
                   href={`/therapists/${t.slug}`}
-                  className="rounded-full bg-[#1B6B6B] px-4 py-2 text-sm font-semibold text-white hover:bg-[#134F4F] transition-colors"
+                  className="rounded-full bg-[#7B5FB8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors"
                 >
                   View Profile
                 </Link>
@@ -123,7 +123,7 @@ export default async function TherapistsPreview() {
         <div className="mt-12 text-center">
           <Link
             href="/therapists"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[#1B6B6B] px-8 py-3 text-base font-semibold text-[#1B6B6B] hover:bg-[#1B6B6B] hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-[#7B5FB8] px-8 py-3 text-base font-semibold text-[#7B5FB8] hover:bg-[#7B5FB8] hover:text-white transition-colors"
           >
             See All Therapists
           </Link>
