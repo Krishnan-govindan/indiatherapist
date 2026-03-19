@@ -224,7 +224,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const templateName = process.env.META_WA_WELCOME_TEMPLATE ?? 'welcome_message';
     const templateBody = 'Thank you for contacting India Therapist and I\'ll help you find the right therapist';
 
-    sendTemplateMessage(waTarget, templateName, 'en', [])
+    sendTemplateMessage(waTarget, templateName, 'en_US', [])
       .then(() =>
         supabaseAdmin.from('conversations').insert({
           lead_id: lead.id,
