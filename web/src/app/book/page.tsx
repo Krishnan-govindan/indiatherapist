@@ -1,28 +1,30 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useForm, Controller } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
+import { ALL_THERAPISTS } from "@/data/therapists";
 
 // ─────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────
 
 const COUNTRY_CODES = [
-  { code: "+1", flag: "🇺🇸", name: "US" },
-  { code: "+1", flag: "🇨🇦", name: "CA" },
-  { code: "+44", flag: "🇬🇧", name: "GB" },
-  { code: "+61", flag: "🇦🇺", name: "AU" },
-  { code: "+64", flag: "🇳🇿", name: "NZ" },
-  { code: "+971", flag: "🇦🇪", name: "AE" },
-  { code: "+65", flag: "🇸🇬", name: "SG" },
-  { code: "+60", flag: "🇲🇾", name: "MY" },
-  { code: "+31", flag: "🇳🇱", name: "NL" },
-  { code: "+49", flag: "🇩🇪", name: "DE" },
-  { code: "+33", flag: "🇫🇷", name: "FR" },
-  { code: "+91", flag: "🇮🇳", name: "IN" },
+  { code: "+1", flag: "\u{1F1FA}\u{1F1F8}", name: "US" },
+  { code: "+1", flag: "\u{1F1E8}\u{1F1E6}", name: "CA" },
+  { code: "+44", flag: "\u{1F1EC}\u{1F1E7}", name: "GB" },
+  { code: "+61", flag: "\u{1F1E6}\u{1F1FA}", name: "AU" },
+  { code: "+64", flag: "\u{1F1F3}\u{1F1FF}", name: "NZ" },
+  { code: "+971", flag: "\u{1F1E6}\u{1F1EA}", name: "AE" },
+  { code: "+65", flag: "\u{1F1F8}\u{1F1EC}", name: "SG" },
+  { code: "+60", flag: "\u{1F1F2}\u{1F1FE}", name: "MY" },
+  { code: "+31", flag: "\u{1F1F3}\u{1F1F1}", name: "NL" },
+  { code: "+49", flag: "\u{1F1E9}\u{1F1EA}", name: "DE" },
+  { code: "+33", flag: "\u{1F1EB}\u{1F1F7}", name: "FR" },
+  { code: "+91", flag: "\u{1F1EE}\u{1F1F3}", name: "IN" },
 ];
 
 const COUNTRIES = [
@@ -32,7 +34,7 @@ const COUNTRIES = [
   "Ireland", "South Africa", "India", "Other",
 ];
 
-// Timezone → country rough map
+// Timezone -> country rough map
 const TZ_COUNTRY: Record<string, string> = {
   "America/New_York": "United States",
   "America/Chicago": "United States",
@@ -58,10 +60,8 @@ const TZ_COUNTRY: Record<string, string> = {
 };
 
 const SUPPORT_TYPES = [
-  { value: "individual", label: "Individual therapy", icon: "👤" },
-  { value: "couples", label: "Couples therapy", icon: "💑" },
-  { value: "family", label: "Family therapy", icon: "👨‍👩‍👧" },
-  { value: "exploring", label: "Just exploring", icon: "🔍" },
+  { value: "individual", label: "Individual therapy", icon: "\u{1F464}" },
+  { value: "couples", label: "Couples therapy", icon: "\u{1F491}" },
 ];
 
 const CONCERNS = [
@@ -70,30 +70,7 @@ const CONCERNS = [
   "Identity", "Marriage", "Other",
 ];
 
-const URGENCY = [
-  { value: "this_week", label: "This week" },
-  { value: "next_month", label: "In the next month" },
-  { value: "exploring", label: "Just exploring" },
-];
-
-const BUDGETS = [
-  { value: "premium", label: "$97/session", sub: "Premium" },
-  { value: "elite", label: "$144/session", sub: "Elite" },
-  { value: "unsure", label: "Not sure yet", sub: "" },
-];
-
-const LANGUAGES = [
-  "Hindi", "Tamil", "Telugu", "Gujarati", "Marathi",
-  "Kannada", "Malayalam", "Punjabi", "English",
-];
-
-const TIME_SLOTS = [
-  { value: "weekday_mornings", label: "Weekday mornings" },
-  { value: "weekday_evenings", label: "Weekday evenings" },
-  { value: "weekends", label: "Weekends" },
-];
-
-const STEPS = ["About You", "Your Needs", "Preferences", "Review"];
+const STEPS = ["About You", "Your Needs", "Review"];
 const STORAGE_KEY = "it_book_form";
 
 // ─────────────────────────────────────────────────────────────
@@ -107,16 +84,10 @@ const schema = z.object({
   phone_code: z.string(),
   phone_number: z.string().min(5, "Please enter your phone number"),
   country: z.string().min(1, "Please select your country"),
-  city: z.string().optional(),
   // Step 2
   support_type: z.string().min(1, "Please select one"),
   concerns: z.array(z.string()).min(1, "Please select at least one"),
-  urgency: z.string().min(1, "Please select one"),
-  budget: z.string().min(1, "Please select one"),
-  // Step 3
-  languages: z.array(z.string()).min(1, "Please select at least one language"),
-  time_slots: z.array(z.string()).min(1, "Please select at least one time"),
-  // Step 4
+  // Step 3 (Review)
   agreed: z.literal(true, { message: "You must agree to continue" }),
 });
 
@@ -128,75 +99,24 @@ type FormData = z.infer<typeof schema>;
 
 const STEP_FIELDS: (keyof FormData)[][] = [
   ["full_name", "email", "phone_code", "phone_number", "country"],
-  ["support_type", "concerns", "urgency", "budget"],
-  ["languages", "time_slots"],
+  ["support_type", "concerns"],
   ["agreed"],
 ];
 
 // ─────────────────────────────────────────────────────────────
-// Matched therapist card (success screen)
+// Main page (wrapped in Suspense for useSearchParams)
 // ─────────────────────────────────────────────────────────────
 
-interface MatchedTherapist {
-  id: string;
-  full_name: string;
-  slug: string;
-  tier: string;
-  session_rate_cents: number;
-  specialties: string[];
-  languages: string[];
-  experience_years: number | null;
-}
+function BookForm() {
+  const searchParams = useSearchParams();
+  const therapistSlug = searchParams.get("therapist");
+  const therapistData = therapistSlug
+    ? ALL_THERAPISTS.find((t) => t.slug === therapistSlug)
+    : null;
+  const therapistName = therapistData?.full_name ?? null;
 
-const FALLBACK_MATCHES: MatchedTherapist[] = [
-  {
-    id: "1", full_name: "Dr. Priya Sharma", slug: "dr-priya-sharma",
-    tier: "premium", session_rate_cents: 9700,
-    specialties: ["Anxiety", "Stress Management", "OCD"],
-    languages: ["Hindi", "English"], experience_years: 10,
-  },
-  {
-    id: "2", full_name: "Kavitha Rajan", slug: "kavitha-rajan",
-    tier: "premium", session_rate_cents: 9700,
-    specialties: ["Relationships", "Couples Therapy"],
-    languages: ["Tamil", "English"], experience_years: 8,
-  },
-];
-
-function MatchCard({ t }: { t: MatchedTherapist }) {
-  const initials = t.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("");
-  return (
-    <div className="rounded-xl bg-white border border-gray-100 p-4 shadow-sm flex items-start gap-3">
-      <div className="h-12 w-12 rounded-full bg-[#7B5FB8]/10 flex items-center justify-center shrink-0">
-        <span className="text-sm font-semibold text-[#7B5FB8]">{initials}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <p className="font-semibold text-gray-900 text-sm">{t.full_name}</p>
-          <span className="text-xs rounded-full bg-[#7B5FB8]/10 text-[#7B5FB8] px-2 py-0.5">{t.tier}</span>
-        </div>
-        <p className="text-xs text-gray-500 mt-0.5">{t.specialties.slice(0, 2).join(" · ")}</p>
-        <p className="text-xs text-gray-400 mt-0.5">🗣 {t.languages.join(" · ")}</p>
-      </div>
-      <Link
-        href={`/therapists/${t.slug}`}
-        className="shrink-0 rounded-full bg-[#7B5FB8] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#6B4AA0] transition-colors"
-      >
-        View
-      </Link>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Main page
-// ─────────────────────────────────────────────────────────────
-
-export default function BookPage() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [matches, setMatches] = useState<MatchedTherapist[]>([]);
   const [animating, setAnimating] = useState(false);
   const [animDir, setAnimDir] = useState<"forward" | "back">("forward");
 
@@ -207,30 +127,25 @@ export default function BookPage() {
     watch,
     setValue,
     trigger,
-    getValues,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       phone_code: "+1",
       concerns: [],
-      languages: [],
-      time_slots: [],
-      budget: "",
       support_type: "",
-      urgency: "",
       country: "",
     },
   });
 
-  // ── Detect country from timezone ──────────────────────────
+  // -- Detect country from timezone
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const detected = TZ_COUNTRY[tz];
     if (detected) setValue("country", detected);
   }, [setValue]);
 
-  // ── Restore from sessionStorage ───────────────────────────
+  // -- Restore from sessionStorage
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem(STORAGE_KEY);
@@ -243,7 +158,7 @@ export default function BookPage() {
     } catch { /* ignore */ }
   }, [setValue]);
 
-  // ── Persist to sessionStorage on every change ─────────────
+  // -- Persist to sessionStorage on every change
   const values = watch();
   useEffect(() => {
     try {
@@ -251,7 +166,7 @@ export default function BookPage() {
     } catch { /* ignore */ }
   }, [values]);
 
-  // ── Animated step transition ──────────────────────────────
+  // -- Animated step transition
   const transition = useCallback((newStep: number, dir: "forward" | "back") => {
     setAnimDir(dir);
     setAnimating(true);
@@ -269,14 +184,15 @@ export default function BookPage() {
 
   const goBack = () => transition(step - 1, "back");
 
-  // ── Submit ────────────────────────────────────────────────
+  // -- Submit: save to DB, then redirect to WhatsApp
   const onSubmit = async (data: FormData) => {
     setSubmitting(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
       const phone = `${data.phone_code}${data.phone_number.replace(/\D/g, "")}`;
 
-      const res = await fetch(`${apiUrl}/api/leads`, {
+      // Save to database
+      await fetch(`${apiUrl}/api/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -284,94 +200,63 @@ export default function BookPage() {
           email: data.email,
           phone,
           country: data.country,
-          city: data.city || undefined,
           concern: data.concerns.join(", "),
           support_type: data.support_type,
-          urgency: data.urgency,
-          budget_preference: data.budget,
-          preferred_languages: data.languages,
-          preferred_times: data.time_slots,
+          preferred_therapist_slug: therapistSlug || undefined,
           source: "book_form",
         }),
       });
 
-      let matchData: MatchedTherapist[] = FALLBACK_MATCHES;
-      if (res.ok) {
-        const body = await res.json();
-        if (body.matched_therapists?.length) matchData = body.matched_therapists;
+      sessionStorage.removeItem(STORAGE_KEY);
+
+      // Build WhatsApp message with all details
+      const supportLabel =
+        SUPPORT_TYPES.find((t) => t.value === data.support_type)?.label ?? data.support_type;
+
+      const lines = [
+        `Hi, I'd like to book a session.`,
+        ``,
+        `*Name:* ${data.full_name}`,
+        `*Email:* ${data.email}`,
+        `*Phone:* ${data.phone_code} ${data.phone_number}`,
+        `*Country:* ${data.country}`,
+        `*Looking for:* ${supportLabel}`,
+        `*Concerns:* ${data.concerns.join(", ")}`,
+      ];
+
+      if (therapistName) {
+        lines.push(`*Therapist:* ${therapistName}`);
       }
 
-      setMatches(matchData);
-      sessionStorage.removeItem(STORAGE_KEY);
-      setSubmitted(true);
+      const waMsg = encodeURIComponent(lines.join("\n"));
+      window.location.href = `https://wa.me/18568782862?text=${waMsg}`;
     } catch {
-      setMatches(FALLBACK_MATCHES);
-      setSubmitted(true);
+      // Even if API fails, still redirect to WhatsApp
+      const phone = `${data.phone_code}${data.phone_number.replace(/\D/g, "")}`;
+      const supportLabel =
+        SUPPORT_TYPES.find((t) => t.value === data.support_type)?.label ?? data.support_type;
+
+      const lines = [
+        `Hi, I'd like to book a session.`,
+        ``,
+        `*Name:* ${data.full_name}`,
+        `*Email:* ${data.email}`,
+        `*Phone:* ${phone}`,
+        `*Country:* ${data.country}`,
+        `*Looking for:* ${supportLabel}`,
+        `*Concerns:* ${data.concerns.join(", ")}`,
+      ];
+
+      if (therapistName) {
+        lines.push(`*Therapist:* ${therapistName}`);
+      }
+
+      const waMsg = encodeURIComponent(lines.join("\n"));
+      window.location.href = `https://wa.me/18568782862?text=${waMsg}`;
     } finally {
       setSubmitting(false);
     }
   };
-
-  // ─────────────────────────────────────────────────────────
-  // Success screen
-  // ─────────────────────────────────────────────────────────
-
-  if (submitted) {
-    return (
-      <main className="min-h-screen bg-[#F8F5FF] flex flex-col items-center justify-start py-16 px-4">
-        <div className="w-full max-w-lg">
-          <div className="text-center mb-8">
-            <div className="text-6xl mb-4">🎉</div>
-            <h1
-              className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3"
-              style={{ fontFamily: "'Outfit', sans-serif" }}
-            >
-              We&apos;re on it!
-            </h1>
-            <p className="text-gray-600 leading-relaxed">
-              Check your WhatsApp — Priya will call you within a few minutes to
-              learn more about what you need and match you with the right therapist.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-5 mb-6">
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <span className="text-2xl">📱</span>
-              <p>
-                Keep your phone nearby. We&apos;ll reach out to{" "}
-                <span className="font-medium text-gray-900">
-                  {getValues("phone_code")}{getValues("phone_number")}
-                </span>{" "}
-                on WhatsApp.
-              </p>
-            </div>
-          </div>
-
-          {matches.length > 0 && (
-            <div>
-              <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                While you wait — therapists who might be a great fit
-              </p>
-              <div className="space-y-3">
-                {matches.map((t) => (
-                  <MatchCard key={t.id} t={t} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-8 text-center">
-            <Link
-              href="/therapists"
-              className="text-sm text-[#7B5FB8] hover:underline"
-            >
-              Browse all therapists →
-            </Link>
-          </div>
-        </div>
-      </main>
-    );
-  }
 
   // ─────────────────────────────────────────────────────────
   // Form steps
@@ -390,16 +275,21 @@ export default function BookPage() {
         {/* Progress header */}
         <div className="mb-8">
           <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 mb-4 inline-block">
-            ← India Therapist
+            &larr; India Therapist
           </Link>
           <h1
             className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            Find Your Therapist
+            Book Your Session
+            {therapistName && (
+              <span className="block text-lg font-medium text-[#7B5FB8] mt-1">
+                with {therapistName}
+              </span>
+            )}
           </h1>
           <p className="text-gray-500 text-sm mb-6">
-            Step {step + 1} of {STEPS.length} — {STEPS[step]}
+            Step {step + 1} of {STEPS.length} &mdash; {STEPS[step]}
           </p>
 
           {/* Progress bar */}
@@ -422,7 +312,7 @@ export default function BookPage() {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
 
-              {/* ── STEP 1 ─ About You ───────────────────── */}
+              {/* -- STEP 1: About You */}
               {step === 0 && (
                 <div className="space-y-5">
                   <StepHeading>Tell us about yourself</StepHeading>
@@ -488,18 +378,10 @@ export default function BookPage() {
                       )}
                     />
                   </Field>
-
-                  <Field label="City" error={undefined}>
-                    <input
-                      {...register("city")}
-                      placeholder="e.g. San Francisco"
-                      className={inputCls(false)}
-                    />
-                  </Field>
                 </div>
               )}
 
-              {/* ── STEP 2 ─ Your Needs ─────────────────── */}
+              {/* -- STEP 2: Your Needs */}
               {step === 1 && (
                 <div className="space-y-7">
                   <StepHeading>What are you looking for?</StepHeading>
@@ -565,161 +447,11 @@ export default function BookPage() {
                       )}
                     />
                   </Field>
-
-                  {/* Urgency */}
-                  <Field label="How soon would you like to start? *" error={errors.urgency?.message}>
-                    <Controller
-                      name="urgency"
-                      control={control}
-                      render={({ field }) => (
-                        <div className="space-y-2">
-                          {URGENCY.map((o) => (
-                            <label
-                              key={o.value}
-                              className={`flex items-center gap-3 rounded-xl border-2 p-3 cursor-pointer transition-all ${
-                                field.value === o.value
-                                  ? "border-[#7B5FB8] bg-[#7B5FB8]/5"
-                                  : "border-gray-200 hover:border-gray-300"
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name="urgency"
-                                value={o.value}
-                                checked={field.value === o.value}
-                                onChange={() => field.onChange(o.value)}
-                                className="accent-[#7B5FB8]"
-                              />
-                              <span className="text-sm font-medium text-gray-800">{o.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    />
-                  </Field>
-
-                  {/* Budget */}
-                  <Field label="What's your budget? *" error={errors.budget?.message}>
-                    <Controller
-                      name="budget"
-                      control={control}
-                      render={({ field }) => (
-                        <div className="space-y-2">
-                          {BUDGETS.map((o) => (
-                            <label
-                              key={o.value}
-                              className={`flex items-center justify-between rounded-xl border-2 p-3 cursor-pointer transition-all ${
-                                field.value === o.value
-                                  ? "border-[#7B5FB8] bg-[#7B5FB8]/5"
-                                  : "border-gray-200 hover:border-gray-300"
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <input
-                                  type="radio"
-                                  name="budget"
-                                  value={o.value}
-                                  checked={field.value === o.value}
-                                  onChange={() => field.onChange(o.value)}
-                                  className="accent-[#7B5FB8]"
-                                />
-                                <span className="text-sm font-medium text-gray-800">{o.label}</span>
-                              </div>
-                              {o.sub && (
-                                <span className="text-xs text-gray-400">{o.sub}</span>
-                              )}
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    />
-                  </Field>
                 </div>
               )}
 
-              {/* ── STEP 3 ─ Preferences ────────────────── */}
+              {/* -- STEP 3: Review + Submit */}
               {step === 2 && (
-                <div className="space-y-7">
-                  <StepHeading>Your preferences</StepHeading>
-
-                  {/* Language */}
-                  <Field label="Which language(s) would you prefer? *" error={errors.languages?.message}>
-                    <Controller
-                      name="languages"
-                      control={control}
-                      render={({ field }) => (
-                        <div className="flex flex-wrap gap-2">
-                          {LANGUAGES.map((lang) => {
-                            const active = field.value.includes(lang);
-                            return (
-                              <button
-                                key={lang}
-                                type="button"
-                                onClick={() =>
-                                  field.onChange(
-                                    active
-                                      ? field.value.filter((x) => x !== lang)
-                                      : [...field.value, lang]
-                                  )
-                                }
-                                className={`rounded-full px-3 py-1.5 text-sm font-medium border transition-all ${
-                                  active
-                                    ? "bg-[#7B5FB8] text-white border-[#7B5FB8]"
-                                    : "bg-white text-gray-600 border-gray-200 hover:border-[#7B5FB8]"
-                                }`}
-                              >
-                                {lang}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    />
-                  </Field>
-
-                  {/* Time slots */}
-                  <Field label="What times work for you? *" error={errors.time_slots?.message}>
-                    <Controller
-                      name="time_slots"
-                      control={control}
-                      render={({ field }) => (
-                        <div className="space-y-2">
-                          {TIME_SLOTS.map((o) => {
-                            const active = field.value.includes(o.value);
-                            return (
-                              <label
-                                key={o.value}
-                                className={`flex items-center gap-3 rounded-xl border-2 p-3 cursor-pointer transition-all ${
-                                  active
-                                    ? "border-[#7B5FB8] bg-[#7B5FB8]/5"
-                                    : "border-gray-200 hover:border-gray-300"
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={active}
-                                  onChange={() =>
-                                    field.onChange(
-                                      active
-                                        ? field.value.filter((x) => x !== o.value)
-                                        : [...field.value, o.value]
-                                    )
-                                  }
-                                  className="accent-[#7B5FB8] h-4 w-4"
-                                />
-                                <span className="text-sm font-medium text-gray-800">{o.label}</span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      )}
-                    />
-                  </Field>
-                </div>
-              )}
-
-              {/* ── STEP 4 ─ Review + Submit ─────────────── */}
-              {step === 3 && (
                 <div className="space-y-6">
                   <StepHeading>Review your details</StepHeading>
 
@@ -732,27 +464,14 @@ export default function BookPage() {
                       value={`${watch("phone_code")} ${watch("phone_number")}`}
                     />
                     <SummaryRow label="Country" value={watch("country")} />
-                    {watch("city") && <SummaryRow label="City" value={watch("city")!} />}
                     <SummaryRow
                       label="Looking for"
                       value={SUPPORT_TYPES.find((t) => t.value === watch("support_type"))?.label ?? ""}
                     />
                     <SummaryRow label="Concerns" value={watch("concerns").join(", ")} />
-                    <SummaryRow
-                      label="Start"
-                      value={URGENCY.find((u) => u.value === watch("urgency"))?.label ?? ""}
-                    />
-                    <SummaryRow
-                      label="Budget"
-                      value={BUDGETS.find((b) => b.value === watch("budget"))?.label ?? ""}
-                    />
-                    <SummaryRow label="Languages" value={watch("languages").join(", ")} />
-                    <SummaryRow
-                      label="Available"
-                      value={watch("time_slots")
-                        .map((v) => TIME_SLOTS.find((t) => t.value === v)?.label ?? v)
-                        .join(", ")}
-                    />
+                    {therapistName && (
+                      <SummaryRow label="Therapist" value={therapistName} />
+                    )}
                   </div>
 
                   {/* Disclaimer checkbox */}
@@ -787,7 +506,7 @@ export default function BookPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full rounded-full bg-[#7B5FB8] px-6 py-3.5 text-base font-semibold text-white hover:bg-[#6B4AA0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 w-full rounded-full bg-[#25D366] px-6 py-3.5 text-base font-semibold text-white hover:bg-[#1ebe5d] transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
                   >
                     {submitting ? (
                       <span className="flex items-center justify-center gap-2">
@@ -795,15 +514,21 @@ export default function BookPage() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                         </svg>
-                        Finding your perfect match…
+                        Submitting...
                       </span>
                     ) : (
-                      "Find My Therapist →"
+                      <>
+                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current shrink-0">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.12.553 4.106 1.522 5.832L.057 23.428a.75.75 0 00.921.921l5.596-1.465A11.946 11.946 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.718 9.718 0 01-4.976-1.366l-.356-.213-3.699.97.987-3.603-.233-.371A9.718 9.718 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z" />
+                        </svg>
+                        Submit &amp; Book via WhatsApp
+                      </>
                     )}
                   </button>
 
                   <p className="text-center text-xs text-gray-400">
-                    🔒 Your information is private and secure
+                    Your information is private and secure
                   </p>
                 </div>
               )}
@@ -817,7 +542,7 @@ export default function BookPage() {
                   onClick={goBack}
                   className="flex-1 rounded-full border-2 border-gray-200 px-6 py-3 text-sm font-semibold text-gray-600 hover:border-gray-300 transition-colors"
                 >
-                  ← Back
+                  &larr; Back
                 </button>
               )}
               {step < STEPS.length - 1 && (
@@ -826,7 +551,7 @@ export default function BookPage() {
                   onClick={goNext}
                   className="flex-1 rounded-full bg-[#7B5FB8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors"
                 >
-                  Continue →
+                  Continue &rarr;
                 </button>
               )}
             </div>
@@ -834,6 +559,14 @@ export default function BookPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function BookPage() {
+  return (
+    <Suspense>
+      <BookForm />
+    </Suspense>
   );
 }
 
