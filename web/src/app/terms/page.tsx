@@ -102,7 +102,7 @@ export default function TermsPage() {
                 support@indiatherapist.com
               </a>
             </p>
-            <p>WhatsApp: +1 (425) 442-4167</p>
+            <p>WhatsApp: +1 (856) 878-2862</p>
           </div>
         </section>
 

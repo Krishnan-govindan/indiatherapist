@@ -146,7 +146,7 @@ export default function PrivacyPage() {
                 support@indiatherapist.com
               </a>
             </p>
-            <p>WhatsApp: +1 (425) 442-4167</p>
+            <p>WhatsApp: +1 (856) 878-2862</p>
             <p>Website:{" "}
               <a href="https://indiatherapist.com" className="text-[#7B5FB8] underline">
                 indiatherapist.com

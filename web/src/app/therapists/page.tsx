@@ -604,7 +604,7 @@ export default function TherapistsPage() {
                 we&apos;ll help you find the right match.
               </p>
               <a
-                href="https://wa.me/919999999999"
+                href="https://wa.me/18568782862"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1DA851] transition-colors"
