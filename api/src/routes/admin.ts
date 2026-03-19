@@ -321,22 +321,4 @@ router.patch('/therapists/:id', async (req, res) => {
   }
 });
 
-// ── Temporary: test WhatsApp template send ───────────────────
-router.post('/debug/whatsapp-template', requireAdminSecret, async (req: Request, res: Response): Promise<void> => {
-  const { to, template_name = 'welcome_message', lang = 'en' } = req.body as Record<string, string>;
-  if (!to) { res.status(400).json({ error: 'to is required' }); return; }
-  const payload = {
-    messaging_product: 'whatsapp',
-    to,
-    type: 'template',
-    template: { name: template_name, language: { code: lang }, components: [] },
-  };
-  try {
-    await sendTemplateMessage(to, template_name, lang, []);
-    res.json({ success: true, to, template_name, lang, payload_sent: payload });
-  } catch (err) {
-    res.status(500).json({ success: false, error: (err as Error).message, to, template_name, lang });
-  }
-});
-
 export default router;
