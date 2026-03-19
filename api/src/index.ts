@@ -14,6 +14,7 @@ import leadsRouter from './routes/leads';
 import therapistsRouter from './routes/therapists';
 import appointmentsRouter from './routes/appointments';
 import adminRouter from './routes/admin';
+import checkoutRouter from './routes/checkout';
 
 // ── Webhook imports ──────────────────────────────────────────
 import metaWhatsappRouter from './webhooks/metaWhatsapp';
@@ -29,6 +30,9 @@ const PORT = process.env.PORT ?? 3001;
 const allowedOrigins = [
   process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
   'http://localhost:3000',
+  'https://web-production-7bea1.up.railway.app',
+  'https://www.indiatherapist.com',
+  'https://indiatherapist.com',
 ];
 
 app.use(
@@ -66,6 +70,7 @@ app.use('/api/leads', leadsRouter);
 app.use('/api/therapists', therapistsRouter);
 app.use('/api/appointments', appointmentsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/checkout', checkoutRouter);
 
 // ── Webhook routes ───────────────────────────────────────────
 app.use('/webhooks/meta-wa', metaWhatsappRouter);

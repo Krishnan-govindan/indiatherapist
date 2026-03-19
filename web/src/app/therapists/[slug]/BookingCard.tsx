@@ -50,7 +50,7 @@ export default function BookingCard({
       const apiUrl =
         process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-      const res = await fetch(`${apiUrl}/api/leads`, {
+      const res = await fetch(`${apiUrl}/api/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -58,8 +58,7 @@ export default function BookingCard({
           email: form.email || undefined,
           phone: form.phone,
           concern: form.concern || undefined,
-          preferred_therapist_slug: therapistSlug,
-          source: "profile_page",
+          therapist_slug: therapistSlug,
         }),
       });
 
@@ -69,12 +68,14 @@ export default function BookingCard({
       }
 
       const data = await res.json();
-      // Use payment_link from API response if available, else show WhatsApp fallback
-      setPaymentUrl(
-        data.payment_link ??
-          data.lead?.payment_link ??
-          waLink
-      );
+
+      if (data.checkout_url) {
+        // Redirect directly to Stripe Checkout
+        window.location.href = data.checkout_url;
+      } else {
+        // Fallback to WhatsApp if Stripe isn't configured
+        setPaymentUrl(waLink);
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
