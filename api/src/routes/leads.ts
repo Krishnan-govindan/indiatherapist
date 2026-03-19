@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { supabaseAdmin } from '../lib/supabase';
 import { logger } from '../lib/logger';
 import { triggerOutboundCall } from '../services/voiceCaller';
-import { sendTextMessage } from '../services/whatsapp';
+import { sendTemplateMessage, sendTextMessage } from '../services/whatsapp';
 import type { Lead } from '../lib/types';
 
 const router = Router();
@@ -216,17 +216,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     });
   });
 
-  // ── 6. Send WhatsApp greeting ────────────────────────────────
+  // ── 6. Send WhatsApp welcome template ───────────────────────
+  // Must use an approved template for proactive outreach (no 24-hr window open yet).
+  // Template name: welcome_message  |  Language: en  |  No variables (static body)
   const waTarget = lead.whatsapp_number ?? lead.phone ?? '';
   if (waTarget) {
-    const greeting =
-      `Hi ${lead.full_name} 🙏 Welcome to India Therapist. ` +
-      `I'm Priya and I'll be helping you find the right therapist. ` +
-      `You'll hear from me shortly on a quick call. ` +
-      `Meanwhile, can you tell me what kind of support you're looking for? ` +
-      `(Individual therapy / Couples / Family)`;
+    const templateName = process.env.META_WA_WELCOME_TEMPLATE ?? 'welcome_message';
+    const templateBody = 'Thank you for contacting India Therapist and I\'ll help you find the right therapist';
 
-    sendTextMessage(waTarget, greeting)
+    sendTemplateMessage(waTarget, templateName, 'en', [])
       .then(() =>
         supabaseAdmin.from('conversations').insert({
           lead_id: lead.id,
@@ -234,13 +232,13 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           direction: 'outbound',
           from_number: process.env.META_WA_PHONE_NUMBER_ID ?? null,
           to_number: waTarget,
-          message_body: greeting,
+          message_body: templateBody,
           ai_generated: false,
           ai_intent: 'welcome',
         })
       )
       .catch((err) => {
-        logger.error('WhatsApp greeting failed', { leadId: lead.id, error: (err as Error).message });
+        logger.error('WhatsApp welcome template failed', { leadId: lead.id, error: (err as Error).message });
       });
   }
 
