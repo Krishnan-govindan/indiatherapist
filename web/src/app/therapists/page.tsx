@@ -451,7 +451,8 @@ export default function TherapistsPage() {
       let data: Therapist[] = [];
       if (res.ok) {
         const json = await res.json();
-        data = json.therapists ?? json ?? [];
+        const raw = json?.therapists ?? json;
+        data = Array.isArray(raw) ? raw : [];
       }
 
       // Fallback to static data if API returns empty
