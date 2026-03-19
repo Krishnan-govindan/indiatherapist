@@ -213,22 +213,23 @@ function BookForm() {
       const supportLabel =
         SUPPORT_TYPES.find((t) => t.value === data.support_type)?.label ?? data.support_type;
 
-      const lines = [
-        `Hi, I'd like to book a session.`,
-        ``,
-        `*Name:* ${data.full_name}`,
-        `*Email:* ${data.email}`,
-        `*Phone:* ${data.phone_code} ${data.phone_number}`,
-        `*Country:* ${data.country}`,
-        `*Looking for:* ${supportLabel}`,
-        `*Concerns:* ${data.concerns.join(", ")}`,
-      ];
+      const buildLines = (phone: string) => {
+        const greeting = therapistName
+          ? `Hi I'd like to connect with ${therapistName}. can you help me out?`
+          : `Hi, I'd like to book a session.`;
+        return [
+          greeting,
+          ``,
+          `*Name:* ${data.full_name}`,
+          `*Email:* ${data.email}`,
+          `*Phone:* ${phone}`,
+          `*Country:* ${data.country}`,
+          `*Looking for:* ${supportLabel}`,
+          `*Concerns:* ${data.concerns.join(", ")}`,
+        ];
+      };
 
-      if (therapistName) {
-        lines.push(`*Therapist:* ${therapistName}`);
-      }
-
-      const waMsg = encodeURIComponent(lines.join("\n"));
+      const waMsg = encodeURIComponent(buildLines(`${data.phone_code} ${data.phone_number}`).join("\n"));
       window.location.href = `https://wa.me/18568782862?text=${waMsg}`;
     } catch {
       // Even if API fails, still redirect to WhatsApp
@@ -236,8 +237,11 @@ function BookForm() {
       const supportLabel =
         SUPPORT_TYPES.find((t) => t.value === data.support_type)?.label ?? data.support_type;
 
+      const greeting = therapistName
+        ? `Hi I'd like to connect with ${therapistName}. can you help me out?`
+        : `Hi, I'd like to book a session.`;
       const lines = [
-        `Hi, I'd like to book a session.`,
+        greeting,
         ``,
         `*Name:* ${data.full_name}`,
         `*Email:* ${data.email}`,
@@ -246,10 +250,6 @@ function BookForm() {
         `*Looking for:* ${supportLabel}`,
         `*Concerns:* ${data.concerns.join(", ")}`,
       ];
-
-      if (therapistName) {
-        lines.push(`*Therapist:* ${therapistName}`);
-      }
 
       const waMsg = encodeURIComponent(lines.join("\n"));
       window.location.href = `https://wa.me/18568782862?text=${waMsg}`;
