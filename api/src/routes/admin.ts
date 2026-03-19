@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabaseAdmin } from '../lib/supabase';
 import { logger } from '../lib/logger';
-import { sendTextMessage } from '../services/whatsapp';
+import { sendTextMessage, sendTemplateMessage } from '../services/whatsapp';
 
 const router = Router();
 
@@ -322,9 +322,7 @@ router.patch('/therapists/:id', async (req, res) => {
 });
 
 // ── Temporary: test WhatsApp template send ───────────────────
-import { sendTemplateMessage } from '../services/whatsapp';
-
-router.post('/debug/whatsapp-template', requireAdmin, async (req: Request, res: Response): Promise<void> => {
+router.post('/debug/whatsapp-template', requireAdminSecret, async (req: Request, res: Response): Promise<void> => {
   const { to, template_name = 'welcome_message', lang = 'en' } = req.body as Record<string, string>;
   if (!to) { res.status(400).json({ error: 'to is required' }); return; }
   const payload = {
