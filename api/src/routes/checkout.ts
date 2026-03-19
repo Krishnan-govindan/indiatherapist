@@ -157,7 +157,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         therapist_id: t.id,
       },
       customer_email: typeof email === 'string' && email ? email : undefined,
-      success_url: `${appUrl}/book/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${appUrl}/book/confirmation?session_id={CHECKOUT_SESSION_ID}&therapist=${encodeURIComponent(t.full_name)}`,
       cancel_url: `${appUrl}/therapists/${therapist_slug}`,
       billing_address_collection: 'auto',
     });
