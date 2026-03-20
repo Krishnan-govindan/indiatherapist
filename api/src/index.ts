@@ -14,6 +14,7 @@ import leadsRouter from './routes/leads';
 import therapistsRouter from './routes/therapists';
 import appointmentsRouter from './routes/appointments';
 import adminRouter from './routes/admin';
+import adminWhatsappRouter from './routes/adminWhatsapp';
 import checkoutRouter from './routes/checkout';
 
 // ── Webhook imports ──────────────────────────────────────────
@@ -70,6 +71,7 @@ app.use('/api/leads', leadsRouter);
 app.use('/api/therapists', therapistsRouter);
 app.use('/api/appointments', appointmentsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/admin/whatsapp', adminWhatsappRouter);
 app.use('/api/checkout', checkoutRouter);
 
 // ── Webhook routes ───────────────────────────────────────────

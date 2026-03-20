@@ -1,8 +1,12 @@
 import { Router } from 'express';
+import axios from 'axios';
 import { supabaseAdmin } from '../lib/supabase';
 import { logger } from '../lib/logger';
 import { sendTextMessage, markMessageRead } from '../services/whatsapp';
+import { processIncomingMessage } from '../services/aiAgent';
 import type { Therapist, SlotOffer, Slot } from '../lib/types';
+
+const SUPPORT_WA_NUMBER = process.env.SUPPORT_WA_NUMBER ?? '+14254424167';
 
 const router = Router();
 
@@ -21,6 +25,9 @@ interface MetaWAMessage {
     button_reply?: { id: string; title: string };
     list_reply?: { id: string; title: string; description?: string };
   };
+  audio?: { id: string; mime_type?: string };
+  image?: { id: string; mime_type?: string; caption?: string };
+  document?: { id: string; mime_type?: string; filename?: string };
 }
 
 interface MetaWAContact {
@@ -89,28 +96,147 @@ async function processInboundMessage(
   const from = message.from; // Meta sends without '+', e.g. "919876543210"
   const fromE164 = `+${from}`;
 
-  // Mark as read — shows blue ticks to sender (non-fatal)
-  await markMessageRead(message.id);
+  let messageText = '';
+  let mediaUrl: string | null = null;
 
-  // Check if sender is a known therapist
-  const { data: therapist } = await supabaseAdmin
-    .from('therapists')
-    .select('id, full_name, whatsapp_number')
-    .eq('whatsapp_number', fromE164)
-    .single();
+  switch (message.type) {
+    case 'text':
+      messageText = message.text?.body ?? '';
+      break;
 
-  const contactName = contacts.find((c) => c.wa_id === from)?.profile?.name ?? null;
+    case 'interactive':
+      messageText =
+        message.interactive?.button_reply?.title ??
+        message.interactive?.list_reply?.title ??
+        '';
+      break;
 
-  await saveConversation({
-    from: fromE164,
-    message,
-    therapistId: therapist?.id ?? null,
-  });
+    case 'audio':
+      messageText = '[Voice message received]';
+      if (message.audio?.id) {
+        mediaUrl = await handleAudioMessage(message.audio.id, fromE164, message.id);
+      }
+      break;
 
-  if (therapist) {
-    await handleTherapistReply(message, fromE164, therapist as Therapist);
-  } else {
-    await handleClientMessage(message, fromE164, contactName);
+    case 'image':
+      messageText = message.image?.caption ?? '[Image received]';
+      if (message.image?.id) {
+        mediaUrl = await getMediaUrl(message.image.id);
+      }
+      break;
+
+    case 'document':
+      messageText = `[Document received: ${message.document?.filename ?? 'unknown'}]`;
+      if (message.document?.id) {
+        mediaUrl = await getMediaUrl(message.document.id);
+      }
+      break;
+
+    default:
+      messageText = `[${message.type} message received]`;
+      break;
+  }
+
+  // Store media URL in conversations if present
+  if (mediaUrl) {
+    await supabaseAdmin.from('conversations').insert({
+      lead_id: null, // aiAgent will handle lead lookup
+      channel: 'whatsapp',
+      direction: 'inbound',
+      from_number: fromE164,
+      message_body: messageText,
+      media_url: mediaUrl,
+      meta_message_id: message.id,
+      ai_generated: false,
+    });
+  }
+
+  // Route through the AI agent — handles both clients and therapists
+  await processIncomingMessage(fromE164, messageText, message.id, message.type);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Audio message handling — download, store, forward to support
+// ─────────────────────────────────────────────────────────────
+
+async function handleAudioMessage(
+  mediaId: string,
+  fromNumber: string,
+  messageId: string
+): Promise<string | null> {
+  try {
+    const token = process.env.META_WA_ACCESS_TOKEN;
+    if (!token) return null;
+
+    // Step 1: Get media URL from Meta
+    const mediaInfoRes = await axios.get(
+      `https://graph.facebook.com/v19.0/${mediaId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const downloadUrl = mediaInfoRes.data?.url;
+    if (!downloadUrl) return null;
+
+    // Step 2: Download the audio file
+    const audioRes = await axios.get(downloadUrl, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: 'arraybuffer',
+    });
+
+    const audioBuffer = Buffer.from(audioRes.data as ArrayBuffer);
+    const fileName = `voice_${fromNumber.replace('+', '')}_${Date.now()}.ogg`;
+
+    // Step 3: Upload to Supabase Storage
+    const { data: uploadData, error: uploadErr } = await supabaseAdmin.storage
+      .from('voice-messages')
+      .upload(fileName, audioBuffer, {
+        contentType: 'audio/ogg',
+        upsert: false,
+      });
+
+    if (uploadErr) {
+      logger.warn('Failed to upload voice message to storage', {
+        error: uploadErr.message,
+        fromNumber,
+      });
+      // Still notify support even if storage fails
+    }
+
+    const storedUrl = uploadData?.path
+      ? `${process.env.SUPABASE_URL}/storage/v1/object/public/voice-messages/${uploadData.path}`
+      : null;
+
+    // Step 4: Forward notification to support
+    await sendTextMessage(
+      SUPPORT_WA_NUMBER,
+      `🎙️ *Voice message received*\n\nFrom: ${fromNumber}\nMessage ID: ${messageId}\n${storedUrl ? `Audio: ${storedUrl}` : 'Audio could not be stored.'}\n\nPlease listen and respond if needed.`
+    );
+
+    logger.info('Voice message processed', { fromNumber, fileName, stored: !!storedUrl });
+    return storedUrl;
+  } catch (err) {
+    logger.error('handleAudioMessage failed', { error: (err as Error).message, fromNumber });
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Get media URL from Meta Graph API (for image/document)
+// ─────────────────────────────────────────────────────────────
+
+async function getMediaUrl(mediaId: string): Promise<string | null> {
+  try {
+    const token = process.env.META_WA_ACCESS_TOKEN;
+    if (!token) return null;
+
+    const res = await axios.get(
+      `https://graph.facebook.com/v19.0/${mediaId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return res.data?.url ?? null;
+  } catch (err) {
+    logger.warn('getMediaUrl failed', { mediaId, error: (err as Error).message });
+    return null;
   }
 }
 

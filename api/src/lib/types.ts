@@ -211,6 +211,68 @@ export interface AnalyticsEvent {
 }
 
 // ─────────────────────────────────────────────────────────────
+// RAG / AI Agent tables — added in 012_rag_tables.sql
+// ─────────────────────────────────────────────────────────────
+
+export type AISessionState =
+  | 'greeting'
+  | 'intake'
+  | 'matching'
+  | 'slot_request'
+  | 'slot_relay'
+  | 'payment_sent'
+  | 'confirmed'
+  | 'escalated';
+
+export interface ConversationEmbedding {
+  id: string;
+  lead_id: string | null;
+  message_id: string | null;
+  content: string;
+  role: string;
+  token_count: number | null;
+  created_at: string;
+}
+
+export interface LeadContextSummary {
+  id: string;
+  lead_id: string;
+  summary: string | null;
+  key_concerns: string[];
+  session_count: number;
+  last_therapist: string | null;
+  last_updated: string;
+}
+
+export interface AIAgentSession {
+  id: string;
+  lead_id: string | null;
+  session_state: AISessionState;
+  current_therapist_id: string | null;
+  slot_offer_sent: boolean;
+  payment_link: string | null;
+  stripe_link_sent: boolean;
+  therapist_confirmed: boolean;
+  client_confirmed: boolean;
+  escalated_to_human: boolean;
+  escalation_reason: string | null;
+  context_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ManualEscalation {
+  id: string;
+  lead_id: string | null;
+  reason: string;
+  ai_last_message: string | null;
+  status: 'pending' | 'resolved';
+  assigned_to: string;
+  resolved_at: string | null;
+  created_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────
 // Utility types
 // ─────────────────────────────────────────────────────────────
 

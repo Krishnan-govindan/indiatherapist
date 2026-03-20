@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { supabaseAdmin } from '../lib/supabase';
 import { logger } from '../lib/logger';
 import type { Lead, Therapist, Appointment } from '../lib/types';
 
@@ -35,7 +36,7 @@ export async function createPaymentLink(
           unit_amount: therapist.session_rate_cents,
           product_data: {
             name: `Therapy Session with ${therapist.full_name}`,
-            description: '60-minute online therapy session',
+            description: '60-minute online therapy session · India Therapist',
           },
         },
         quantity: 1,
@@ -45,12 +46,12 @@ export async function createPaymentLink(
       lead_id: lead.id,
       appointment_id: appointment.id,
       therapist_id: therapist.id,
+      therapist_name: therapist.full_name,
     },
     after_completion: {
       type: 'redirect',
-      redirect: { url: `${appUrl}/book/confirmation` },
+      redirect: { url: `${appUrl}/booking-confirmed?session={CHECKOUT_SESSION_ID}` },
     },
-    // Collect billing address for international clients
     billing_address_collection: 'auto',
   });
 
@@ -63,6 +64,41 @@ export async function createPaymentLink(
   });
 
   return paymentLink.url;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 1b. createSessionPaymentLink
+//     Simplified wrapper for the AI agent — handles all lookups.
+//     Returns the payment URL string.
+// ─────────────────────────────────────────────────────────────
+
+export async function createSessionPaymentLink(
+  leadId: string,
+  therapistId: string,
+  appointmentId: string
+): Promise<string> {
+  // Fetch lead, therapist, appointment in parallel
+  const [leadResult, therapistResult, appointmentResult] = await Promise.all([
+    supabaseAdmin.from('leads').select('*').eq('id', leadId).single(),
+    supabaseAdmin.from('therapists').select('*').eq('id', therapistId).single(),
+    supabaseAdmin.from('appointments').select('*').eq('id', appointmentId).single(),
+  ]);
+
+  if (leadResult.error || !leadResult.data) {
+    throw new Error(`Lead not found: ${leadId}`);
+  }
+  if (therapistResult.error || !therapistResult.data) {
+    throw new Error(`Therapist not found: ${therapistId}`);
+  }
+  if (appointmentResult.error || !appointmentResult.data) {
+    throw new Error(`Appointment not found: ${appointmentId}`);
+  }
+
+  return createPaymentLink(
+    leadResult.data as Lead,
+    therapistResult.data as Therapist,
+    appointmentResult.data as Appointment
+  );
 }
 
 // ─────────────────────────────────────────────────────────────

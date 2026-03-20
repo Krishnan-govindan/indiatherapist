@@ -157,6 +157,16 @@ async function handlePaymentSuccess(event: Stripe.Event): Promise<void> {
 
   logger.info('Payment processed — lead converted', { lead_id, appointment_id, amountCents });
 
+  // ── 4b. Update AI agent session to 'confirmed' ─────────────
+  await supabaseAdmin
+    .from('ai_agent_sessions')
+    .update({
+      session_state: 'confirmed',
+      client_confirmed: true,
+    })
+    .eq('lead_id', lead_id)
+    .eq('session_state', 'payment_sent');
+
   // ── 5. Format session datetime strings ──────────────────────
   const clientTz = lead.timezone ?? 'Asia/Kolkata';
   const sessionTimeClient = formatSessionTime(
@@ -203,10 +213,12 @@ async function handlePaymentSuccess(event: Stripe.Event): Promise<void> {
     const clientFirstName = (lead.full_name ?? 'Client').split(' ')[0];
 
     const therapistMsg =
-      `🎉 *New confirmed session!*\n\n` +
-      `📅 ${sessionTimeIst}\n` +
+      `✅ *Payment confirmed!* Client ${clientFirstName} has paid for the session.\n\n` +
+      `📅 Session: ${sessionTimeIst}\n` +
       `👤 Client: ${clientFirstName}\n` +
       `🔗 ${meetingLink}\n\n` +
+      `Please coordinate the video call link with the client directly.\n` +
+      `You can reach them via the platform once they respond to you.\n\n` +
       `Thank you for being part of India Therapist! 🙏`;
 
     await sendTextMessage(therapist.whatsapp_number, therapistMsg).catch((err) =>

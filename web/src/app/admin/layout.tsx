@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { WhatsAppBadge } from "./WhatsAppBadge";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <NavLink href="/admin">Overview</NavLink>
             <NavLink href="/admin/leads">Leads</NavLink>
             <NavLink href="/admin/therapists">Therapists</NavLink>
+            <Link
+              href="/admin/whatsapp"
+              className="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-[#B0A8C0] hover:bg-[#3E2868] hover:text-white transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-green-400">💬</span>
+                WhatsApp
+              </span>
+              <WhatsAppBadge />
+            </Link>
           </nav>
           <div className="px-3 py-4 border-t border-[#3E2868]">
             <a
