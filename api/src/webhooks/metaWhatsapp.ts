@@ -98,6 +98,7 @@ async function processInboundMessage(
 
   let messageText = '';
   let mediaUrl: string | null = null;
+  let interactiveId: string | undefined;
 
   switch (message.type) {
     case 'text':
@@ -109,6 +110,10 @@ async function processInboundMessage(
         message.interactive?.button_reply?.title ??
         message.interactive?.list_reply?.title ??
         '';
+      interactiveId =
+        message.interactive?.button_reply?.id ??
+        message.interactive?.list_reply?.id ??
+        undefined;
       break;
 
     case 'audio':
@@ -152,7 +157,7 @@ async function processInboundMessage(
   }
 
   // Route through the AI agent — handles both clients and therapists
-  await processIncomingMessage(fromE164, messageText, message.id, message.type);
+  await processIncomingMessage(fromE164, messageText, message.id, message.type, interactiveId);
 }
 
 // ─────────────────────────────────────────────────────────────

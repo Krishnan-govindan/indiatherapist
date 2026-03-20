@@ -3,19 +3,22 @@
 //
 // Handles the complete WhatsApp conversation lifecycle:
 // greeting → intake → matching → slot_request → slot_relay
-// → payment_sent → confirmed → escalated
+// → confirmed → escalated
 //
-// Uses Claude Haiku for all AI responses (fast + cheap).
-// Does NOT modify existing webhook handlers, Stripe webhook,
-// or any existing routes.
+// Uses WhatsApp interactive buttons/lists for guided flow.
+// Uses Claude Haiku for AI responses when needed.
 // ─────────────────────────────────────────────────────────────
 
 import Anthropic from '@anthropic-ai/sdk';
 import { supabaseAdmin } from '../lib/supabase';
 import { logger } from '../lib/logger';
-import { sendTextMessage, markMessageRead } from '../services/whatsapp';
+import {
+  sendTextMessage,
+  sendInteractiveButtons,
+  sendInteractiveList,
+  markMessageRead,
+} from '../services/whatsapp';
 import { matchTherapists } from '../services/aiMatcher';
-import { createPaymentLink } from '../services/stripeService';
 import {
   storeMessageEmbedding,
   getRelevantHistory,
@@ -39,29 +42,26 @@ Your personality: Warm, empathetic, culturally aware, professional. Never sound 
 Rules:
 1. Always address the client by their first name if known
 2. If client mentions a specific therapist by name, match to the therapist list
-3. Never share therapist personal phone numbers with clients directly
+3. Never share therapist personal phone numbers until session is confirmed
 4. If you cannot help (refund, complaint, crisis), escalate to human support
-5. Payment must happen BEFORE confirming any session
-6. Always respond in the same language the client writes in
-7. Keep responses concise — this is WhatsApp, not email
-8. Use emoji sparingly and naturally
-9. Be culturally sensitive to Indian values and NRI experiences`;
+5. Always respond in the same language the client writes in
+6. Keep responses concise — this is WhatsApp, not email
+7. Use emoji sparingly and naturally
+8. Be culturally sensitive to Indian values and NRI experiences`;
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 // ─────────────────────────────────────────────────────────────
-// Escalation keywords
+// Crisis-only escalation keywords (reduced false positives)
 // ─────────────────────────────────────────────────────────────
 
 const ESCALATION_KEYWORDS = [
-  'refund', 'money back', 'charge', 'fraud', 'complaint',
-  'emergency', 'crisis', 'suicide', 'harm', 'self-harm',
-  'wrong', 'problem', 'issue', 'not working', 'broken',
+  'suicide', 'self-harm', 'kill myself', 'end my life',
+  'emergency', 'crisis', 'abuse',
+  'refund', 'money back', 'fraud',
 ];
-
-const AFFIRMATIVE_PATTERNS = /^(yes|ok|sure|proceed|agree|yeah|yep|yea|haan|ha|ji|1)$/i;
 
 // ─────────────────────────────────────────────────────────────
 // Main entry point
@@ -71,7 +71,8 @@ export async function processIncomingMessage(
   fromNumber: string,
   messageText: string,
   messageId: string,
-  messageType: string // text | audio | image | document
+  messageType: string,
+  interactiveReplyId?: string
 ): Promise<void> {
   try {
     // Mark as read (blue ticks)
@@ -91,7 +92,6 @@ export async function processIncomingMessage(
       .single();
 
     if (therapistSender) {
-      // Log therapist message to conversations (no lead_id)
       await supabaseAdmin.from('conversations').insert({
         therapist_id: therapistSender.id,
         channel: 'whatsapp',
@@ -103,7 +103,7 @@ export async function processIncomingMessage(
         ai_generated: false,
       });
 
-      await handleTherapistMessage(therapistSender as Therapist, messageText);
+      await handleTherapistMessage(therapistSender as Therapist, messageText, interactiveReplyId);
       return;
     }
 
@@ -135,39 +135,42 @@ export async function processIncomingMessage(
     // ── STEP B: Get or create agent session ────────────────────
     const session = await getOrCreateSession(leadId);
 
-    // ── Check for SUPPORT keyword first ────────────────────────
+    // ── If escalated to human, just forward — don't auto-respond ──
+    if (session.escalated_to_human && session.session_state === 'escalated') {
+      await handleEscalated(lead, session, messageText);
+      return;
+    }
+
+    // ── Check for SUPPORT keyword ──────────────────────────────
     if (messageText.trim().toUpperCase() === 'SUPPORT') {
       await escalateToHuman(lead, session, messageText, 'Client requested support');
       return;
     }
 
-    // ── Check escalation triggers ──────────────────────────────
+    // ── Check crisis escalation triggers ───────────────────────
     const lowerMsg = messageText.toLowerCase();
     const escalationMatch = ESCALATION_KEYWORDS.find((kw) => lowerMsg.includes(kw));
     if (escalationMatch) {
-      await escalateToHuman(lead, session, messageText, `Keyword detected: "${escalationMatch}"`);
+      await escalateToHuman(lead, session, messageText, `Crisis keyword: "${escalationMatch}"`);
       return;
     }
 
     // ── STEP D: Route by session state ─────────────────────────
     switch (session.session_state) {
       case 'greeting':
-        await handleGreeting(lead, session, messageText, isNew);
+        await handleGreeting(lead, session, messageText, isNew, interactiveReplyId);
         break;
       case 'intake':
-        await handleIntake(lead, session, messageText);
+        await handleIntake(lead, session, messageText, interactiveReplyId);
         break;
       case 'matching':
-        await handleMatching(lead, session, messageText);
+        await handleMatching(lead, session, messageText, interactiveReplyId);
         break;
       case 'slot_request':
-        await handleSlotRequest(lead, session, messageText);
+        await handleSlotRequest(lead, session, messageText, interactiveReplyId);
         break;
       case 'slot_relay':
         await handleSlotRelay(lead, session, messageText);
-        break;
-      case 'payment_sent':
-        await handlePaymentSent(lead, session, messageText);
         break;
       case 'confirmed':
         await handleConfirmed(lead, session, messageText);
@@ -176,10 +179,10 @@ export async function processIncomingMessage(
         await handleEscalated(lead, session, messageText);
         break;
       default:
-        await handleGreeting(lead, session, messageText, isNew);
+        await handleGreeting(lead, session, messageText, isNew, interactiveReplyId);
     }
 
-    // ── STEP F: Update context summary periodically ────────────
+    // ── Update context summary periodically ──────────────────
     const { count } = await supabaseAdmin
       .from('conversation_embeddings')
       .select('id', { count: 'exact', head: true })
@@ -200,22 +203,50 @@ export async function processIncomingMessage(
 }
 
 // ─────────────────────────────────────────────────────────────
-// Lead management
+// Lead management — checks BOTH whatsapp_number AND phone
 // ─────────────────────────────────────────────────────────────
 
 async function getOrCreateLead(
   fromNumber: string
 ): Promise<{ lead: Lead; isNew: boolean }> {
-  const { data: existing } = await supabaseAdmin
+  // Check whatsapp_number first
+  const { data: byWA } = await supabaseAdmin
     .from('leads')
     .select('*')
     .eq('whatsapp_number', fromNumber)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .single();
 
-  if (existing) {
-    return { lead: existing as Lead, isNew: false };
+  if (byWA) {
+    return { lead: byWA as Lead, isNew: false };
   }
 
+  // Check phone field (user may have registered via website /book form)
+  const { data: byPhone } = await supabaseAdmin
+    .from('leads')
+    .select('*')
+    .eq('phone', fromNumber)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .single();
+
+  if (byPhone) {
+    // Found by phone — set whatsapp_number so future lookups work
+    await supabaseAdmin
+      .from('leads')
+      .update({ whatsapp_number: fromNumber })
+      .eq('id', (byPhone as Lead).id);
+
+    const merged = { ...byPhone, whatsapp_number: fromNumber } as Lead;
+    logger.info('Lead found by phone, updated whatsapp_number', {
+      leadId: merged.id,
+      fromNumber,
+    });
+    return { lead: merged, isNew: false };
+  }
+
+  // Create new lead
   const { data: newLead, error } = await supabaseAdmin
     .from('leads')
     .insert({
@@ -296,7 +327,7 @@ async function updateSession(
 }
 
 // ─────────────────────────────────────────────────────────────
-// Send AI response + log it
+// Send helpers — text, buttons, list — all log to DB + RAG
 // ─────────────────────────────────────────────────────────────
 
 async function sendAndLog(
@@ -327,6 +358,71 @@ async function sendAndLog(
   }
 }
 
+async function sendButtonsAndLog(
+  lead: Lead,
+  body: string,
+  buttons: { id: string; title: string }[],
+  aiIntent?: string
+): Promise<void> {
+  const to = lead.whatsapp_number!;
+  await sendInteractiveButtons(to, body, buttons);
+
+  const buttonLabels = buttons.map((b) => b.title).join(', ');
+  const logMsg = `${body}\n[Buttons: ${buttonLabels}]`;
+
+  const { data: conv } = await supabaseAdmin
+    .from('conversations')
+    .insert({
+      lead_id: lead.id,
+      channel: 'whatsapp',
+      direction: 'outbound',
+      from_number: AI_WA_NUMBER,
+      to_number: to,
+      message_body: logMsg,
+      ai_generated: true,
+      ai_intent: aiIntent ?? null,
+    })
+    .select('id')
+    .single();
+
+  if (conv) {
+    await storeMessageEmbedding(lead.id, conv.id, logMsg, 'assistant');
+  }
+}
+
+async function sendListAndLog(
+  lead: Lead,
+  header: string,
+  body: string,
+  sections: { title: string; rows: { id: string; title: string; description?: string }[] }[],
+  aiIntent?: string
+): Promise<void> {
+  const to = lead.whatsapp_number!;
+  await sendInteractiveList(to, header, body, sections);
+
+  const itemNames = sections.flatMap((s) => s.rows.map((r) => r.title)).join(', ');
+  const logMsg = `${header}\n${body}\n[List: ${itemNames}]`;
+
+  const { data: conv } = await supabaseAdmin
+    .from('conversations')
+    .insert({
+      lead_id: lead.id,
+      channel: 'whatsapp',
+      direction: 'outbound',
+      from_number: AI_WA_NUMBER,
+      to_number: to,
+      message_body: logMsg,
+      ai_generated: true,
+      ai_intent: aiIntent ?? null,
+    })
+    .select('id')
+    .single();
+
+  if (conv) {
+    await storeMessageEmbedding(lead.id, conv.id, logMsg, 'assistant');
+  }
+}
+
 // ─────────────────────────────────────────────────────────────
 // Claude AI response generation
 // ─────────────────────────────────────────────────────────────
@@ -337,7 +433,6 @@ async function generateAIResponse(
   userMessage: string,
   additionalContext: string = ''
 ): Promise<string> {
-  // Build context
   const history = await getRelevantHistory(lead.id, userMessage, 10);
   const contextSummary = await getLeadContextSummary(lead.id);
 
@@ -350,28 +445,24 @@ async function generateAIResponse(
       .single();
     if (therapist) {
       const t = therapist as Therapist;
-      therapistInfo = `\nMatched Therapist: ${t.full_name}, ${t.experience_years ?? '5+'} years experience, specializes in ${t.specialties.join(', ')}, speaks ${t.languages.join(', ')}, rate: $${(t.session_rate_cents / 100).toFixed(0)}/session`;
+      therapistInfo = `\nMatched Therapist: ${t.full_name}, specializes in ${t.specialties.join(', ')}, rate: $${(t.session_rate_cents / 100).toFixed(0)}/session`;
     }
   }
 
   const contextParts: string[] = [];
-  if (contextSummary?.summary) {
-    contextParts.push(`Lead Summary: ${contextSummary.summary}`);
-  }
+  if (contextSummary?.summary) contextParts.push(`Lead Summary: ${contextSummary.summary}`);
   if (lead.full_name) contextParts.push(`Client name: ${lead.full_name}`);
   if (lead.presenting_issues?.length) contextParts.push(`Concerns: ${lead.presenting_issues.join(', ')}`);
   if (lead.therapy_type) contextParts.push(`Looking for: ${lead.therapy_type}`);
-  if (lead.country) contextParts.push(`Country: ${lead.country}`);
   contextParts.push(`Session state: ${session.session_state}`);
   if (therapistInfo) contextParts.push(therapistInfo);
   if (additionalContext) contextParts.push(additionalContext);
 
   const conversationHistory = history.map((h) => ({
-    role: h.role === 'user' ? 'user' as const : 'assistant' as const,
+    role: h.role === 'user' ? ('user' as const) : ('assistant' as const),
     content: h.content,
   }));
 
-  // Add current message
   conversationHistory.push({ role: 'user', content: userMessage });
 
   try {
@@ -390,146 +481,239 @@ async function generateAIResponse(
     return text.trim();
   } catch (err) {
     logger.error('generateAIResponse failed', { error: (err as Error).message });
-    return "I'm having a moment — let me get back to you shortly. 🙏";
+    return "I'm having a moment \u2014 let me get back to you shortly. \u{1F64F}";
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// STATE: greeting
+// STATE: greeting — Welcome + therapy type buttons
 // ─────────────────────────────────────────────────────────────
 
 async function handleGreeting(
   lead: Lead,
   session: AgentSession,
   messageText: string,
-  isNew: boolean
+  isNew: boolean,
+  interactiveReplyId?: string
 ): Promise<void> {
-  // Try to extract therapist name from the message
+  // Check if user mentioned a therapist name
   const therapist = await extractTherapistFromMessage(messageText);
-
   if (therapist) {
-    // Client mentioned a specific therapist — skip intake
     await updateSession(session.id, {
-      session_state: 'matching',
+      session_state: 'slot_request',
       current_therapist_id: therapist.id,
       context_json: { ...session.context_json, mentioned_therapist: therapist.full_name },
     });
 
-    // Update lead with matched therapist
     await supabaseAdmin
       .from('leads')
       .update({ matched_therapist_id: therapist.id })
       .eq('id', lead.id);
 
-    // Refresh lead
-    const { data: updatedLead } = await supabaseAdmin
-      .from('leads')
-      .select('*')
-      .eq('id', lead.id)
-      .single();
-
-    await handleMatching(updatedLead as Lead || lead, { ...session, session_state: 'matching', current_therapist_id: therapist.id }, messageText);
+    // Show therapist profile with confirm buttons
+    await showTherapistProfile(lead, therapist);
     return;
   }
 
-  // Check if lead already has info (returning user)
-  if (!isNew && lead.full_name && lead.presenting_issues?.length > 0) {
-    // Existing lead with data — go to intake to ask what they need now
-    const firstName = lead.full_name.split(' ')[0];
-    await sendAndLog(
-      lead,
-      `Hi ${firstName}! 🙏 Welcome back to ${PLATFORM_NAME}.\n\nHow can I help you today? Are you looking to book another session or do you have something new on your mind?`,
-      'greeting_returning'
-    );
+  // Check if the message itself is a therapy type selection (text-based)
+  const therapyType = extractTherapyType(messageText);
+  if (therapyType) {
+    await supabaseAdmin.from('leads').update({ therapy_type: therapyType }).eq('id', lead.id);
     await updateSession(session.id, { session_state: 'intake' });
+    const updatedLead = { ...lead, therapy_type: therapyType } as Lead;
+    await showTherapistList(updatedLead, session);
     return;
   }
 
-  // New lead — send welcome and move to intake
-  const name = lead.full_name?.split(' ')[0] ?? 'there';
-  await sendAndLog(
+  // Send welcome + therapy type buttons
+  const firstName = lead.full_name?.split(' ')[0] ?? 'there';
+  const welcomeText = isNew
+    ? `Hi ${firstName}! \u{1F64F} Welcome to ${PLATFORM_NAME}. I'm Pooja, your AI assistant.\n\nI'm here to help you find the right therapist. What kind of support are you looking for?`
+    : `Hi ${firstName}! \u{1F64F} Welcome back to ${PLATFORM_NAME}.\n\nHow can I help you today? What kind of therapy are you looking for?`;
+
+  await sendButtonsAndLog(
     lead,
-    `Hi ${name}! 🙏 Welcome to ${PLATFORM_NAME}. I'm Pooja, your AI assistant.\n\nI'm here to help you find the right therapist. To get started, could you tell me:\n\n1. What kind of support are you looking for? (individual, couples, or family therapy)\n2. What's been on your mind lately?`,
-    'greeting_new'
+    welcomeText,
+    [
+      { id: 'therapy_individual', title: 'Individual Therapy' },
+      { id: 'therapy_couples', title: 'Couples Therapy' },
+      { id: 'therapy_family', title: 'Family Therapy' },
+    ],
+    'greeting'
   );
 
   await updateSession(session.id, { session_state: 'intake' });
 }
 
 // ─────────────────────────────────────────────────────────────
-// STATE: intake
+// STATE: intake — Handle therapy type selection → therapist list
 // ─────────────────────────────────────────────────────────────
 
 async function handleIntake(
   lead: Lead,
   session: AgentSession,
-  messageText: string
+  messageText: string,
+  interactiveReplyId?: string
 ): Promise<void> {
-  // Use Claude to extract intake info
-  const extracted = await extractIntakeInfo(messageText);
+  // Check if user mentioned a therapist name at any point
+  const therapist = await extractTherapistFromMessage(messageText);
+  if (therapist) {
+    await updateSession(session.id, {
+      session_state: 'slot_request',
+      current_therapist_id: therapist.id,
+      context_json: { ...session.context_json, mentioned_therapist: therapist.full_name },
+    });
 
-  // Update lead with extracted info
-  const updates: Record<string, unknown> = {};
-  if (extracted.therapy_type) updates.therapy_type = extracted.therapy_type;
-  if (extracted.concerns?.length) updates.presenting_issues = extracted.concerns;
-  if (extracted.pain_summary) updates.pain_summary = extracted.pain_summary;
-  if (extracted.urgency) updates.urgency = extracted.urgency;
-
-  if (Object.keys(updates).length > 0) {
-    await supabaseAdmin.from('leads').update(updates).eq('id', lead.id);
-  }
-
-  // Check if we have enough info to match
-  const hasTherapyType = extracted.therapy_type || lead.therapy_type;
-  const hasConcerns = (extracted.concerns?.length ?? 0) > 0 || (lead.presenting_issues?.length ?? 0) > 0;
-
-  if (hasTherapyType && hasConcerns) {
-    // Enough info — run matcher
-    const { data: refreshedLead } = await supabaseAdmin
+    await supabaseAdmin
       .from('leads')
-      .select('*')
-      .eq('id', lead.id)
-      .single();
+      .update({ matched_therapist_id: therapist.id })
+      .eq('id', lead.id);
 
-    const matched = await matchTherapists(refreshedLead as Lead || lead);
-
-    if (matched.length > 0) {
-      await updateSession(session.id, {
-        session_state: 'matching',
-        current_therapist_id: matched[0].id,
-      });
-
-      await handleMatching(
-        refreshedLead as Lead || lead,
-        { ...session, session_state: 'matching', current_therapist_id: matched[0].id },
-        messageText
-      );
-      return;
-    }
+    await showTherapistProfile(lead, therapist);
+    return;
   }
 
-  // Need more info — ask follow-up via AI
-  const aiReply = await generateAIResponse(
+  // Handle button reply for therapy type
+  let therapyType: string | null = null;
+
+  if (interactiveReplyId?.startsWith('therapy_')) {
+    therapyType = interactiveReplyId.replace('therapy_', '');
+  } else {
+    // Try to extract therapy type from text
+    therapyType = extractTherapyType(messageText);
+  }
+
+  if (therapyType) {
+    await supabaseAdmin.from('leads').update({ therapy_type: therapyType }).eq('id', lead.id);
+    const updatedLead = { ...lead, therapy_type: therapyType } as Lead;
+    await showTherapistList(updatedLead, session);
+    return;
+  }
+
+  // Could not determine therapy type — re-send buttons
+  await sendButtonsAndLog(
     lead,
-    session,
-    messageText,
-    'You are in intake mode. Gently ask for any missing information: therapy type (individual/couples/family), main concerns, and preferred language. Be warm and empathetic.'
+    `Could you let me know what kind of therapy you're looking for? Please select an option below:`,
+    [
+      { id: 'therapy_individual', title: 'Individual Therapy' },
+      { id: 'therapy_couples', title: 'Couples Therapy' },
+      { id: 'therapy_family', title: 'Family Therapy' },
+    ],
+    'intake_retry'
   );
-  await sendAndLog(lead, aiReply, 'intake');
 }
 
 // ─────────────────────────────────────────────────────────────
-// STATE: matching
+// STATE: matching — Handle therapist selection from list
 // ─────────────────────────────────────────────────────────────
 
 async function handleMatching(
   lead: Lead,
   session: AgentSession,
-  _messageText: string
+  messageText: string,
+  interactiveReplyId?: string
 ): Promise<void> {
+  let selectedTherapist: Therapist | null = null;
+
+  // Check interactive list reply
+  if (interactiveReplyId?.startsWith('therapist_')) {
+    const therapistId = interactiveReplyId.replace('therapist_', '');
+    const { data: t } = await supabaseAdmin
+      .from('therapists')
+      .select('*')
+      .eq('id', therapistId)
+      .single();
+    if (t) selectedTherapist = t as Therapist;
+  }
+
+  // Check if user typed a therapist name
+  if (!selectedTherapist) {
+    selectedTherapist = await extractTherapistFromMessage(messageText);
+  }
+
+  if (selectedTherapist) {
+    await updateSession(session.id, {
+      session_state: 'slot_request',
+      current_therapist_id: selectedTherapist.id,
+    });
+
+    await supabaseAdmin
+      .from('leads')
+      .update({ matched_therapist_id: selectedTherapist.id, status: 'matched' })
+      .eq('id', lead.id);
+
+    await showTherapistProfile(lead, selectedTherapist);
+    return;
+  }
+
+  // Unrecognized — re-show the therapist list
+  await sendAndLog(
+    lead,
+    `Please select a therapist from the list above, or type their name. If you'd like a different therapy type, reply with "individual", "couples", or "family".`,
+    'matching_retry'
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// STATE: slot_request — Confirm therapist → contact them
+// ─────────────────────────────────────────────────────────────
+
+async function handleSlotRequest(
+  lead: Lead,
+  session: AgentSession,
+  messageText: string,
+  interactiveReplyId?: string
+): Promise<void> {
+  // Handle "show more" button
+  if (interactiveReplyId === 'confirm_more' || /^(more|other|different)/i.test(messageText.trim())) {
+    await handleMoreOptions(lead, session);
+    return;
+  }
+
+  // Handle "yes, proceed" button or text
+  const isYes =
+    interactiveReplyId === 'confirm_yes' ||
+    /^(yes|ok|sure|proceed|agree|yeah|yep|yea|haan|ha|ji|1|book|confirm)$/i.test(messageText.trim());
+
+  if (!isYes) {
+    // Check if they mentioned a different therapist
+    const therapist = await extractTherapistFromMessage(messageText);
+    if (therapist) {
+      await updateSession(session.id, {
+        current_therapist_id: therapist.id,
+      });
+      await supabaseAdmin
+        .from('leads')
+        .update({ matched_therapist_id: therapist.id })
+        .eq('id', lead.id);
+      await showTherapistProfile(lead, therapist);
+      return;
+    }
+
+    // Unrecognized — re-prompt
+    const therapistId = session.current_therapist_id;
+    let therapistName = 'the therapist';
+    if (therapistId) {
+      const { data: t } = await supabaseAdmin.from('therapists').select('full_name').eq('id', therapistId).single();
+      if (t) therapistName = t.full_name;
+    }
+
+    await sendButtonsAndLog(
+      lead,
+      `Would you like to proceed with *${therapistName}*?`,
+      [
+        { id: 'confirm_yes', title: 'Yes, proceed' },
+        { id: 'confirm_more', title: 'Show more' },
+      ],
+      'slot_request_retry'
+    );
+    return;
+  }
+
+  // ── YES — Contact the therapist ─────────────────────────
   const therapistId = session.current_therapist_id;
   if (!therapistId) {
-    logger.warn('handleMatching: no therapist ID in session', { sessionId: session.id });
+    await sendAndLog(lead, "Let me find a therapist for you first.", 'slot_request_no_therapist');
     await updateSession(session.id, { session_state: 'intake' });
     return;
   }
@@ -541,162 +725,92 @@ async function handleMatching(
     .single();
 
   if (!therapist) {
-    logger.warn('handleMatching: therapist not found', { therapistId });
     await updateSession(session.id, { session_state: 'intake' });
     return;
   }
 
   const t = therapist as Therapist;
-  const rateUsd = (t.session_rate_cents / 100).toFixed(0);
-  const firstName = lead.full_name?.split(' ')[0] ?? 'there';
 
-  const message =
-    `${firstName}, I think *${t.full_name}* would be a wonderful match for you! 🙏\n\n` +
-    `👩‍⚕️ *${t.full_name}* — ${t.experience_years ?? '5+'} years experience\n` +
-    `🎯 Specializes in: ${t.specialties.slice(0, 3).join(', ')}\n` +
-    `🗣️ Languages: ${t.languages.join(', ')}\n` +
-    `💰 Rate: $${rateUsd}/session (60 min)\n\n` +
-    `Shall I check their availability for you?\n` +
-    `Reply *YES* to proceed or *MORE* to see other options.`;
+  // Create appointment
+  const { data: appointment, error: aptErr } = await supabaseAdmin
+    .from('appointments')
+    .insert({
+      lead_id: lead.id,
+      therapist_id: therapistId,
+      status: 'pending_therapist',
+      session_duration_min: 60,
+      therapist_timezone: t.timezone,
+      client_timezone: lead.timezone ?? null,
+    })
+    .select('*')
+    .single();
 
-  await sendAndLog(lead, message, 'matching');
+  if (aptErr || !appointment) {
+    logger.error('Failed to create appointment', { error: aptErr?.message });
+    await sendAndLog(lead, "Something went wrong. Please try again.", 'error');
+    return;
+  }
 
-  await updateSession(session.id, { session_state: 'slot_request' });
+  // Create slot offer record
+  await supabaseAdmin.from('slot_offers').insert({
+    appointment_id: appointment.id,
+    therapist_id: therapistId,
+    lead_id: lead.id,
+  });
+
+  // Message the therapist with Yes/No buttons
+  if (t.whatsapp_number) {
+    const clientName = lead.full_name ?? 'A client';
+    const clientConcerns = lead.presenting_issues?.join(', ') || lead.pain_summary || 'Not specified';
+    const clientTherapyType = lead.therapy_type || 'Not specified';
+
+    const therapistMsg =
+      `\u{1F64F} Hi ${t.full_name.split(' ')[0]}!\n\n` +
+      `A new client would like to book a session with you.\n\n` +
+      `\u{1F464} Client: ${clientName}\n` +
+      `\u{1F4CB} Looking for: ${clientTherapyType} therapy\n` +
+      `\u{1F4AD} Concern: ${clientConcerns}\n\n` +
+      `Are you available to take this client?`;
+
+    await sendInteractiveButtons(t.whatsapp_number, therapistMsg, [
+      { id: 'therapist_yes', title: 'Yes, available' },
+      { id: 'therapist_no', title: 'Not available' },
+    ]);
+
+    // Log outbound to therapist
+    await supabaseAdmin.from('conversations').insert({
+      therapist_id: therapistId,
+      channel: 'whatsapp',
+      direction: 'outbound',
+      from_number: AI_WA_NUMBER,
+      to_number: t.whatsapp_number,
+      message_body: therapistMsg,
+      ai_generated: true,
+      ai_intent: 'availability_request',
+    });
+  }
+
+  // Tell client we're checking
+  await sendAndLog(
+    lead,
+    `Great choice! \u{1F64F} I've reached out to *${t.full_name}* to check their availability.\n\nWe'll let you know as soon as they respond. This usually takes a few hours.`,
+    'checking_availability'
+  );
+
+  await updateSession(session.id, {
+    session_state: 'slot_relay',
+    slot_offer_sent: true,
+    context_json: { ...session.context_json, appointment_id: appointment.id },
+  });
 
   await supabaseAdmin
     .from('leads')
-    .update({ status: 'matched', matched_therapist_id: therapistId })
+    .update({ status: 'slot_offered' })
     .eq('id', lead.id);
 }
 
 // ─────────────────────────────────────────────────────────────
-// STATE: slot_request
-// ─────────────────────────────────────────────────────────────
-
-async function handleSlotRequest(
-  lead: Lead,
-  session: AgentSession,
-  messageText: string
-): Promise<void> {
-  const lowerMsg = messageText.trim().toLowerCase();
-
-  // Check for "more" / "other"
-  if (lowerMsg === 'more' || lowerMsg.includes('other option') || lowerMsg === '2') {
-    await handleMoreOptions(lead, session);
-    return;
-  }
-
-  // Check for affirmative
-  if (AFFIRMATIVE_PATTERNS.test(messageText.trim())) {
-    const therapistId = session.current_therapist_id;
-    if (!therapistId) {
-      await sendAndLog(lead, "Let me find a therapist for you first. What kind of support are you looking for?", 'slot_request_no_therapist');
-      await updateSession(session.id, { session_state: 'intake' });
-      return;
-    }
-
-    const { data: therapist } = await supabaseAdmin
-      .from('therapists')
-      .select('*')
-      .eq('id', therapistId)
-      .single();
-
-    if (!therapist) {
-      await updateSession(session.id, { session_state: 'intake' });
-      return;
-    }
-
-    const t = therapist as Therapist;
-
-    // Create appointment
-    const { data: appointment, error: aptErr } = await supabaseAdmin
-      .from('appointments')
-      .insert({
-        lead_id: lead.id,
-        therapist_id: therapistId,
-        status: 'pending_therapist',
-        session_duration_min: 60,
-        therapist_timezone: t.timezone,
-        client_timezone: lead.timezone ?? null,
-      })
-      .select('*')
-      .single();
-
-    if (aptErr || !appointment) {
-      logger.error('Failed to create appointment', { error: aptErr?.message });
-      await sendAndLog(lead, "Something went wrong. Let me try again — please reply YES once more.", 'error');
-      return;
-    }
-
-    // Create slot offer
-    await supabaseAdmin.from('slot_offers').insert({
-      appointment_id: appointment.id,
-      therapist_id: therapistId,
-      lead_id: lead.id,
-    });
-
-    // Message therapist
-    if (t.whatsapp_number) {
-      const clientConcerns = lead.presenting_issues?.join(', ') || lead.pain_summary || 'Not specified';
-      const clientLanguages = lead.preferred_languages?.join(', ') || 'Not specified';
-      const clientCountry = lead.country || 'Not specified';
-
-      const therapistMsg =
-        `🙏 Hi ${t.full_name.split(' ')[0]}! A new client is requesting a session with you.\n\n` +
-        `👤 Client concern: ${clientConcerns}\n` +
-        `🗣️ Language: ${clientLanguages}\n` +
-        `🌏 Country: ${clientCountry}\n\n` +
-        `Are you available to take this client?\n` +
-        `Reply *YES* to accept or *NO* to decline.`;
-
-      await sendTextMessage(t.whatsapp_number, therapistMsg);
-
-      // Log outbound to therapist
-      await supabaseAdmin.from('conversations').insert({
-        therapist_id: therapistId,
-        channel: 'whatsapp',
-        direction: 'outbound',
-        from_number: AI_WA_NUMBER,
-        to_number: t.whatsapp_number,
-        message_body: therapistMsg,
-        ai_generated: true,
-        ai_intent: 'slot_request_to_therapist',
-      });
-    }
-
-    // Message client
-    await sendAndLog(
-      lead,
-      `Great! I've reached out to ${t.full_name} to check their availability. You'll hear back within a few hours. 🙏`,
-      'slot_request_sent'
-    );
-
-    await updateSession(session.id, {
-      session_state: 'slot_relay',
-      slot_offer_sent: true,
-      context_json: { ...session.context_json, appointment_id: appointment.id },
-    });
-
-    await supabaseAdmin
-      .from('leads')
-      .update({ status: 'slot_offered' })
-      .eq('id', lead.id);
-
-    return;
-  }
-
-  // Unrecognized response — use AI
-  const aiReply = await generateAIResponse(
-    lead,
-    session,
-    messageText,
-    'The client was just shown a therapist match and asked to reply YES to proceed or MORE for other options. Help them decide.'
-  );
-  await sendAndLog(lead, aiReply, 'slot_request_ai');
-}
-
-// ─────────────────────────────────────────────────────────────
-// STATE: slot_relay — handles both therapist and client replies
+// STATE: slot_relay — Waiting for therapist response
 // ─────────────────────────────────────────────────────────────
 
 async function handleSlotRelay(
@@ -704,18 +818,8 @@ async function handleSlotRelay(
   session: AgentSession,
   messageText: string
 ): Promise<void> {
-  const lowerMsg = messageText.trim().toLowerCase();
-
-  // Check if client is selecting a slot (1, 2, or 3)
-  const slotMatch = messageText.trim().match(/^[1-3]$/);
-  if (slotMatch) {
-    await handleSlotSelection(lead, session, parseInt(slotMatch[0]));
-    return;
-  }
-
-  // Otherwise, AI response about waiting for therapist
   const therapistId = session.current_therapist_id;
-  let therapistName = 'your therapist';
+  let therapistName = 'your selected therapist';
   if (therapistId) {
     const { data: t } = await supabaseAdmin
       .from('therapists')
@@ -725,32 +829,25 @@ async function handleSlotRelay(
     if (t) therapistName = t.full_name;
   }
 
-  if (lowerMsg === 'status' || lowerMsg.includes('update') || lowerMsg.includes('when')) {
-    await sendAndLog(
-      lead,
-      `I'm still waiting to hear back from ${therapistName}. I'll notify you as soon as they respond with available time slots. 🙏`,
-      'slot_relay_status'
-    );
-    return;
-  }
-
-  const aiReply = await generateAIResponse(
+  await sendAndLog(
     lead,
-    session,
-    messageText,
-    `You are waiting for therapist ${therapistName} to respond with availability. The client is asking something while waiting. Be helpful and reassuring.`
+    `I'm still waiting to hear back from *${therapistName}*. I'll notify you as soon as they confirm their availability. \u{1F64F}\n\nThank you for your patience!`,
+    'slot_relay_waiting'
   );
-  await sendAndLog(lead, aiReply, 'slot_relay_ai');
 }
 
-// Handle therapist messages (separate flow from client)
+// ─────────────────────────────────────────────────────────────
+// Therapist message handler (separate from client flow)
+// ─────────────────────────────────────────────────────────────
+
 async function handleTherapistMessage(
   therapist: Therapist,
-  messageText: string
+  messageText: string,
+  interactiveReplyId?: string
 ): Promise<void> {
   const lowerMsg = messageText.trim().toLowerCase();
 
-  // Find the most recent slot offer for this therapist
+  // Find the most recent open slot offer for this therapist
   const { data: slotOffer } = await supabaseAdmin
     .from('slot_offers')
     .select('id, appointment_id, lead_id')
@@ -762,10 +859,21 @@ async function handleTherapistMessage(
 
   if (!slotOffer) {
     logger.info('Therapist message but no open slot offer', { therapistId: therapist.id });
+    // Acknowledge but no action needed
+    await sendTextMessage(
+      therapist.whatsapp_number!,
+      `Thank you for your message! There are no pending client requests at the moment. We'll reach out when a new client wants to book with you. \u{1F64F}`
+    );
     return;
   }
 
-  // Get the agent session for this lead
+  // Get the client lead and session
+  const { data: lead } = await supabaseAdmin
+    .from('leads')
+    .select('*')
+    .eq('id', slotOffer.lead_id)
+    .single();
+
   const { data: session } = await supabaseAdmin
     .from('ai_agent_sessions')
     .select('*')
@@ -774,26 +882,103 @@ async function handleTherapistMessage(
     .limit(1)
     .single();
 
-  if (!session) return;
+  if (!lead || !session) return;
 
-  const { data: lead } = await supabaseAdmin
-    .from('leads')
-    .select('*')
-    .eq('id', slotOffer.lead_id)
-    .single();
+  // ── Therapist says YES ──────────────────────────────────
+  const isYes =
+    interactiveReplyId === 'therapist_yes' ||
+    /^(yes|available|accept|sure|ok|can do|ready)/i.test(lowerMsg);
 
-  if (!lead) return;
-
-  // Therapist says YES
-  if (/^(yes|available|accept|sure|ok|can do)/i.test(lowerMsg)) {
+  if (isYes) {
+    // Update records
     await supabaseAdmin
       .from('ai_agent_sessions')
-      .update({ therapist_confirmed: true })
+      .update({
+        therapist_confirmed: true,
+        session_state: 'confirmed',
+      })
       .eq('id', session.id);
 
+    await supabaseAdmin
+      .from('slot_offers')
+      .update({ therapist_responded_at: new Date().toISOString() })
+      .eq('id', slotOffer.id);
+
+    await supabaseAdmin
+      .from('appointments')
+      .update({ status: 'confirmed' })
+      .eq('id', slotOffer.appointment_id);
+
+    await supabaseAdmin
+      .from('leads')
+      .update({ status: 'converted' })
+      .eq('id', lead.id);
+
+    const clientName = (lead as Lead).full_name ?? 'Client';
+    const clientPhone = (lead as Lead).whatsapp_number ?? (lead as Lead).phone ?? '';
+    const clientConcerns = (lead as Lead).presenting_issues?.join(', ') || 'Not specified';
+
+    // Send client the good news + therapist details
+    await sendAndLog(
+      lead as Lead,
+      `Great news! \u{1F389} *${therapist.full_name}* is available and has confirmed your session!\n\n` +
+      `\u{1F4DE} You can now coordinate directly with your therapist:\n` +
+      `\u{1F469}\u{200D}\u{2695}\u{FE0F} *${therapist.full_name}*\n` +
+      `\u{1F4F1} WhatsApp: ${therapist.whatsapp_number}\n\n` +
+      `Please reach out to them to schedule your session time. We wish you a wonderful experience! \u{1F64F}`,
+      'session_confirmed'
+    );
+
+    // Send therapist the client details
     await sendTextMessage(
       therapist.whatsapp_number!,
-      `✅ Thank you! Please share 2-3 available time slots.\n\nFormat: DD/MM at HH:MM IST\n(e.g., 25/03 at 10:00 IST)`
+      `\u{2705} Confirmed! Here are the client details:\n\n` +
+      `\u{1F464} *${clientName}*\n` +
+      `\u{1F4F1} WhatsApp: ${clientPhone}\n` +
+      `\u{1F4AD} Concern: ${clientConcerns}\n\n` +
+      `Please reach out to them to schedule the session. Thank you for being part of ${PLATFORM_NAME}! \u{1F64F}`
+    );
+
+    // Log therapist outbound
+    await supabaseAdmin.from('conversations').insert({
+      therapist_id: therapist.id,
+      channel: 'whatsapp',
+      direction: 'outbound',
+      from_number: AI_WA_NUMBER,
+      to_number: therapist.whatsapp_number,
+      message_body: `Client details shared: ${clientName} (${clientPhone})`,
+      ai_generated: true,
+      ai_intent: 'session_confirmed_therapist',
+    });
+
+    // Notify support team
+    await sendTextMessage(
+      SUPPORT_WA_NUMBER,
+      `\u{1F389} *[CLIENT CONVERTED]*\n\n` +
+      `\u{1F464} Client: ${clientName} (${clientPhone})\n` +
+      `\u{1F469}\u{200D}\u{2695}\u{FE0F} Therapist: ${therapist.full_name}\n` +
+      `\u{1F4CB} Concern: ${clientConcerns}\n\n` +
+      `Session confirmed \u{2014} details have been shared with both parties.`
+    );
+
+    logger.info('Session confirmed \u{2014} details shared', {
+      leadId: lead.id,
+      therapistId: therapist.id,
+      therapistName: therapist.full_name,
+    });
+
+    return;
+  }
+
+  // ── Therapist says NO ───────────────────────────────────
+  const isNo =
+    interactiveReplyId === 'therapist_no' ||
+    /^(no|not available|decline|busy|can'?t|cannot|unavailable)/i.test(lowerMsg);
+
+  if (isNo) {
+    await sendTextMessage(
+      therapist.whatsapp_number!,
+      `No problem! Thank you for letting us know. We'll find another therapist for this client. \u{1F64F}`
     );
 
     // Log
@@ -803,257 +988,41 @@ async function handleTherapistMessage(
       direction: 'outbound',
       from_number: AI_WA_NUMBER,
       to_number: therapist.whatsapp_number,
-      message_body: 'Requested time slots from therapist',
+      message_body: 'Therapist declined, looking for alternatives',
       ai_generated: true,
-      ai_intent: 'request_slots',
+      ai_intent: 'therapist_declined',
     });
 
-    return;
-  }
+    // Expire this slot offer
+    await supabaseAdmin
+      .from('slot_offers')
+      .update({ is_expired: true, therapist_responded_at: new Date().toISOString() })
+      .eq('id', slotOffer.id);
 
-  // Therapist says NO
-  if (/^(no|not available|decline|busy|can'?t|cannot)/i.test(lowerMsg)) {
-    await sendTextMessage(
-      therapist.whatsapp_number!,
-      `No problem! Thank you for letting us know. We'll find another therapist for this client. 🙏`
-    );
-
-    // Notify client
+    // Notify client and try next therapist
     await sendAndLog(
       lead as Lead,
-      `Still looking for your perfect match — we'll have an update soon! 🙏`,
-      'therapist_declined'
+      `*${therapist.full_name}* is not available at the moment. Let me find another great therapist for you! \u{1F64F}`,
+      'therapist_declined_notify'
     );
 
-    // Try next therapist
     await handleMoreOptions(lead as Lead, session as AgentSession);
     return;
   }
 
-  // Therapist sent slot times (DD/MM pattern)
-  const slotPattern = /(\d{1,2})\/(\d{1,2})\s+(?:at\s+)?(\d{1,2}):(\d{2})/gi;
-  const slots: { date: string; time_ist: string; label: string }[] = [];
-  const year = new Date().getFullYear();
-  let match: RegExpExecArray | null;
-
-  while ((match = slotPattern.exec(messageText)) !== null) {
-    const [, day, month, hour, minute] = match;
-    const d = day.padStart(2, '0');
-    const m = month.padStart(2, '0');
-    const h = hour.padStart(2, '0');
-
-    slots.push({
-      date: `${year}-${m}-${d}`,
-      time_ist: `${h}:${minute} IST`,
-      label: `${d}/${m} · ${h}:${minute} IST`,
-    });
-  }
-
-  if (slots.length > 0) {
-    // Update slot offer
-    await supabaseAdmin
-      .from('slot_offers')
-      .update({
-        offered_slots: slots,
-        therapist_responded_at: new Date().toISOString(),
-      })
-      .eq('id', slotOffer.id);
-
-    // Update appointment
-    await supabaseAdmin
-      .from('appointments')
-      .update({ status: 'slots_offered', offered_slots: slots })
-      .eq('id', slotOffer.appointment_id);
-
-    // Send slots to client
-    const slotLines = slots.map((s, i) => `${i + 1}️⃣ ${s.label}`).join('\n');
-    const clientName = (lead as Lead).full_name?.split(' ')[0] ?? 'there';
-
-    await sendAndLog(
-      lead as Lead,
-      `🗓️ ${therapist.full_name} has shared available slots:\n\n${slotLines}\n\nReply with *1*, *2*, or *3* to confirm your preferred slot.`,
-      'slots_relayed'
-    );
-
-    // Confirm to therapist
-    await sendTextMessage(
-      therapist.whatsapp_number!,
-      `✅ Slots shared with ${clientName}. We'll let you know once they pick a time!`
-    );
-
-    return;
-  }
-
-  // Unrecognized therapist message
-  await sendTextMessage(
+  // Unrecognized therapist message — re-send buttons
+  await sendInteractiveButtons(
     therapist.whatsapp_number!,
-    `Thanks for your message! If you'd like to share time slots, please use this format:\nDD/MM at HH:MM IST\n(e.g., 25/03 at 10:00 IST)`
+    `Thanks for your message! Could you please confirm \u{2014} are you available for this client?`,
+    [
+      { id: 'therapist_yes', title: 'Yes, available' },
+      { id: 'therapist_no', title: 'Not available' },
+    ]
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// Slot selection → Payment
-// ─────────────────────────────────────────────────────────────
-
-async function handleSlotSelection(
-  lead: Lead,
-  session: AgentSession,
-  slotNumber: number
-): Promise<void> {
-  const appointmentId = session.context_json?.appointment_id as string | undefined;
-  if (!appointmentId) {
-    await sendAndLog(lead, "I couldn't find your booking. Let me start fresh — what kind of support are you looking for?", 'error');
-    await updateSession(session.id, { session_state: 'intake' });
-    return;
-  }
-
-  // Get appointment with slot offer
-  const { data: appointment } = await supabaseAdmin
-    .from('appointments')
-    .select('*, therapists(*)')
-    .eq('id', appointmentId)
-    .single();
-
-  if (!appointment?.offered_slots || !Array.isArray(appointment.offered_slots)) {
-    await sendAndLog(lead, "Hmm, I don't see any slots. Let me check with the therapist again.", 'error');
-    return;
-  }
-
-  const slots = appointment.offered_slots as { date: string; time_ist: string; label: string }[];
-  const selectedSlot = slots[slotNumber - 1];
-
-  if (!selectedSlot) {
-    await sendAndLog(lead, `Please reply with a number between 1 and ${slots.length}.`, 'invalid_slot');
-    return;
-  }
-
-  // Update appointment
-  await supabaseAdmin
-    .from('appointments')
-    .update({
-      status: 'slot_selected',
-      selected_slot: selectedSlot,
-      session_date: selectedSlot.date,
-    })
-    .eq('id', appointmentId);
-
-  // Update slot offer
-  await supabaseAdmin
-    .from('slot_offers')
-    .update({
-      client_selected_slot: selectedSlot,
-      client_responded_at: new Date().toISOString(),
-    })
-    .eq('appointment_id', appointmentId);
-
-  // Get therapist
-  const therapistId = session.current_therapist_id!;
-  const { data: therapist } = await supabaseAdmin
-    .from('therapists')
-    .select('*')
-    .eq('id', therapistId)
-    .single();
-
-  if (!therapist) {
-    await sendAndLog(lead, "Something went wrong. Our team will reach out shortly.", 'error');
-    return;
-  }
-
-  const t = therapist as Therapist;
-  const rateUsd = (t.session_rate_cents / 100).toFixed(0);
-
-  // Generate Stripe payment link
-  try {
-    const paymentUrl = await createPaymentLink(
-      lead,
-      t,
-      appointment as Appointment
-    );
-
-    // Send payment message to client
-    await sendAndLog(
-      lead,
-      `✅ Perfect! Slot confirmed with *${t.full_name}* on *${selectedSlot.label}*.\n\n` +
-      `To confirm your session, please complete the payment:\n\n` +
-      `💳 ${paymentUrl}\n\n` +
-      `💰 $${rateUsd} for 60-minute session\n` +
-      `🔒 Secured by Stripe\n` +
-      `✅ Full refund if unsatisfied\n\n` +
-      `Your session will be confirmed once payment is received.`,
-      'payment_link_sent'
-    );
-
-    // Notify therapist
-    const clientFirstName = (lead.full_name ?? 'Client').split(' ')[0];
-    await sendTextMessage(
-      t.whatsapp_number!,
-      `📋 Client ${clientFirstName} has selected *${selectedSlot.label}*.\n\n` +
-      `⚠️ Please note: The session will only be confirmed after payment is received. We'll notify you once payment is done.\n\n` +
-      `Please wait for payment confirmation before proceeding.`
-    );
-
-    await updateSession(session.id, {
-      session_state: 'payment_sent',
-      payment_link: paymentUrl,
-      stripe_link_sent: true,
-    });
-
-    await supabaseAdmin
-      .from('leads')
-      .update({ status: 'payment_pending' })
-      .eq('id', lead.id);
-
-  } catch (err) {
-    logger.error('Failed to create payment link', { error: (err as Error).message });
-    await sendAndLog(
-      lead,
-      `I'm having trouble generating the payment link. Our team will send it to you shortly. 🙏`,
-      'payment_error'
-    );
-    await escalateToHuman(lead, session, 'Payment link generation failed', 'Payment link creation error');
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// STATE: payment_sent
-// ─────────────────────────────────────────────────────────────
-
-async function handlePaymentSent(
-  lead: Lead,
-  session: AgentSession,
-  messageText: string
-): Promise<void> {
-  const lowerMsg = messageText.trim().toLowerCase();
-
-  if (lowerMsg === 'support') {
-    await escalateToHuman(lead, session, messageText, 'Client requested support during payment');
-    return;
-  }
-
-  const therapistId = session.current_therapist_id;
-  let therapistName = 'your therapist';
-  if (therapistId) {
-    const { data: t } = await supabaseAdmin
-      .from('therapists')
-      .select('full_name')
-      .eq('id', therapistId)
-      .single();
-    if (t) therapistName = t.full_name;
-  }
-
-  const paymentLink = session.payment_link ?? '[payment link]';
-
-  await sendAndLog(
-    lead,
-    `Your session with *${therapistName}* is pending payment.\n\n` +
-    `Please complete payment here:\n💳 ${paymentLink}\n\n` +
-    `Need help? Reply *SUPPORT* to speak with our team.`,
-    'payment_reminder'
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// STATE: confirmed
+// STATE: confirmed — Session connected, handle follow-ups
 // ─────────────────────────────────────────────────────────────
 
 async function handleConfirmed(
@@ -1065,13 +1034,13 @@ async function handleConfirmed(
     lead,
     session,
     messageText,
-    'The client\'s session is confirmed and paid. Help with session info, meeting link, or rescheduling requests. Be warm and supportive.'
+    'The client has been connected with their therapist. Contact details have been shared. Help with any follow-up questions. If they want to book another session or see a different therapist, guide them.'
   );
   await sendAndLog(lead, aiReply, 'confirmed');
 }
 
 // ─────────────────────────────────────────────────────────────
-// STATE: escalated
+// STATE: escalated — Forward to support silently
 // ─────────────────────────────────────────────────────────────
 
 async function handleEscalated(
@@ -1079,14 +1048,13 @@ async function handleEscalated(
   _session: AgentSession,
   messageText: string
 ): Promise<void> {
-  // Forward to support — do NOT respond with AI
   const clientName = lead.full_name ?? lead.whatsapp_number ?? 'Unknown';
 
   await sendTextMessage(
     SUPPORT_WA_NUMBER,
-    `⚠️ *[ESCALATED LEAD]*\n\n` +
-    `👤 Client: ${clientName} (${lead.whatsapp_number})\n` +
-    `💬 Their message: ${messageText}\n\n` +
+    `\u{26A0}\u{FE0F} *[ESCALATED]*\n\n` +
+    `\u{1F464} Client: ${clientName} (${lead.whatsapp_number})\n` +
+    `\u{1F4AC} Message: ${messageText}\n\n` +
     `Please respond to them directly.`
   );
 
@@ -1097,7 +1065,7 @@ async function handleEscalated(
 }
 
 // ─────────────────────────────────────────────────────────────
-// Escalation
+// Escalation helper
 // ─────────────────────────────────────────────────────────────
 
 async function escalateToHuman(
@@ -1106,7 +1074,6 @@ async function escalateToHuman(
   messageText: string,
   reason: string
 ): Promise<void> {
-  // Create escalation record
   await supabaseAdmin.from('manual_escalations').insert({
     lead_id: lead.id,
     reason,
@@ -1115,37 +1082,119 @@ async function escalateToHuman(
     assigned_to: 'support',
   });
 
-  // Update session
   await updateSession(session.id, {
     session_state: 'escalated',
     escalated_to_human: true,
     escalation_reason: reason,
   });
 
-  // Forward to support
   const clientName = lead.full_name ?? 'Unknown';
   await sendTextMessage(
     SUPPORT_WA_NUMBER,
-    `⚠️ *[ESCALATION]*\n\n` +
-    `👤 Client: ${clientName} (${lead.whatsapp_number})\n` +
-    `📋 Reason: ${reason}\n` +
-    `💬 Last message: ${messageText}\n` +
-    `📊 Session state: ${session.session_state}\n\n` +
+    `\u{26A0}\u{FE0F} *[ESCALATION]*\n\n` +
+    `\u{1F464} Client: ${clientName} (${lead.whatsapp_number})\n` +
+    `\u{1F4CB} Reason: ${reason}\n` +
+    `\u{1F4AC} Last message: ${messageText}\n\n` +
     `Please respond to them.`
   );
 
-  // Notify client
   await sendAndLog(
     lead,
-    `I'm connecting you with our support team right now. Someone will respond shortly. 🙏\n\nFor urgent matters, WhatsApp us at: ${SUPPORT_WA_NUMBER}`,
+    `I'm connecting you with our support team. Someone will respond shortly. \u{1F64F}\n\nFor urgent matters, WhatsApp us at: ${SUPPORT_WA_NUMBER}`,
     'escalation'
   );
 
-  logger.info('Lead escalated to human', {
-    leadId: lead.id,
-    reason,
-    previousState: session.session_state,
-  });
+  logger.info('Lead escalated to human', { leadId: lead.id, reason });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Show therapist list (interactive list message)
+// ─────────────────────────────────────────────────────────────
+
+async function showTherapistList(
+  lead: Lead,
+  session: AgentSession
+): Promise<void> {
+  // Use AI matcher to find best matches
+  let therapists: Therapist[] = [];
+
+  try {
+    therapists = await matchTherapists(lead);
+  } catch (err) {
+    logger.warn('matchTherapists failed, using fallback', { error: (err as Error).message });
+  }
+
+  // Fallback: get first 5 active therapists
+  if (therapists.length === 0) {
+    const { data: fallback } = await supabaseAdmin
+      .from('therapists')
+      .select('*')
+      .eq('is_active', true)
+      .limit(5);
+    therapists = (fallback ?? []) as Therapist[];
+  }
+
+  if (therapists.length === 0) {
+    await sendAndLog(
+      lead,
+      `We're currently updating our therapist directory. Our team will reach out with personalized recommendations shortly. \u{1F64F}`,
+      'no_therapists'
+    );
+    await escalateToHuman(lead, session, 'No active therapists found', 'System: no therapists available');
+    return;
+  }
+
+  // Build interactive list
+  const rows = therapists.slice(0, 10).map((t) => ({
+    id: `therapist_${t.id}`,
+    title: t.full_name.slice(0, 24),
+    description: `${t.specialties?.[0] ?? 'General'} \u{00B7} $${(t.session_rate_cents / 100).toFixed(0)}/session`.slice(0, 72),
+  }));
+
+  const therapyLabel = lead.therapy_type
+    ? `${lead.therapy_type.charAt(0).toUpperCase() + lead.therapy_type.slice(1)} therapy`
+    : 'Therapy';
+
+  await sendListAndLog(
+    lead,
+    'Choose a Therapist',
+    `Here are our recommended therapists for ${therapyLabel.toLowerCase()}. Tap below to see the list and select your preferred therapist:`,
+    [{ title: 'Recommended Therapists', rows }],
+    'therapist_list'
+  );
+
+  await updateSession(session.id, { session_state: 'matching' });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Show therapist profile with confirm buttons
+// ─────────────────────────────────────────────────────────────
+
+async function showTherapistProfile(
+  lead: Lead,
+  therapist: Therapist
+): Promise<void> {
+  const rateUsd = (therapist.session_rate_cents / 100).toFixed(0);
+  const firstName = lead.full_name?.split(' ')[0] ?? 'there';
+
+  const profileMsg =
+    `${firstName}, here's your selected therapist:\n\n` +
+    `\u{1F469}\u{200D}\u{2695}\u{FE0F} *${therapist.full_name}*\n` +
+    `\u{1F3AF} Specializes in: ${therapist.specialties.slice(0, 3).join(', ')}\n` +
+    `\u{1F5E3}\u{FE0F} Languages: ${therapist.languages.join(', ')}\n` +
+    `\u{23F1}\u{FE0F} Experience: ${therapist.experience_years ?? '5+'} years\n` +
+    `\u{1F4B0} Rate: $${rateUsd}/session (60 min)\n\n` +
+    `Would you like to proceed with ${therapist.full_name.split(' ')[0]}?`;
+
+  await sendButtonsAndLog(
+    lead,
+    profileMsg,
+    [
+      { id: 'confirm_yes', title: 'Yes, proceed' },
+      { id: 'confirm_more', title: 'Show more' },
+    ],
+    'therapist_profile'
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1156,50 +1205,47 @@ async function handleMoreOptions(
   lead: Lead,
   session: AgentSession
 ): Promise<void> {
-  // Get the current therapist to exclude
   const excludeId = session.current_therapist_id;
 
-  // Re-fetch lead for latest data
   const { data: refreshedLead } = await supabaseAdmin
     .from('leads')
     .select('*')
     .eq('id', lead.id)
     .single();
 
-  const matched = await matchTherapists(refreshedLead as Lead || lead);
-
-  // Find a different therapist
+  const matched = await matchTherapists((refreshedLead as Lead) || lead);
   const nextTherapist = matched.find((t) => t.id !== excludeId);
 
   if (nextTherapist) {
     await updateSession(session.id, {
-      session_state: 'matching',
+      session_state: 'slot_request',
       current_therapist_id: nextTherapist.id,
     });
 
-    await handleMatching(
-      refreshedLead as Lead || lead,
-      { ...session, session_state: 'matching', current_therapist_id: nextTherapist.id },
-      'Show me another therapist'
-    );
+    await supabaseAdmin
+      .from('leads')
+      .update({ matched_therapist_id: nextTherapist.id })
+      .eq('id', lead.id);
+
+    await showTherapistProfile((refreshedLead as Lead) || lead, nextTherapist);
   } else {
+    // No more options — show the full list again
     await sendAndLog(
       lead,
-      `I've shown you our best matches for your needs. Would you like to proceed with the previous therapist, or shall I connect you with our support team for personalized help?\n\nReply *YES* to go back or *SUPPORT* for help.`,
+      `I've shown you our best matches. Let me show the full list again so you can choose:`,
       'no_more_options'
     );
-    await updateSession(session.id, { session_state: 'slot_request' });
+    await showTherapistList((refreshedLead as Lead) || lead, session);
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// Extract therapist name from message
+// Extract therapist name from message (fuzzy matching)
 // ─────────────────────────────────────────────────────────────
 
 async function extractTherapistFromMessage(
   messageText: string
 ): Promise<Therapist | null> {
-  // Fetch all active therapists
   const { data: therapists } = await supabaseAdmin
     .from('therapists')
     .select('*')
@@ -1211,10 +1257,11 @@ async function extractTherapistFromMessage(
 
   for (const t of therapists as Therapist[]) {
     const fullName = t.full_name.toLowerCase();
-    const firstName = fullName.split(' ')[0];
-    const lastName = fullName.split(' ').slice(-1)[0];
+    const nameParts = fullName.split(/\s+/);
+    const firstName = nameParts[0];
+    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
 
-    // Check full name, first name (min 4 chars to avoid false positives), or last name
+    // Match on full name, first name (4+ chars), or last name (4+ chars)
     if (
       lowerMsg.includes(fullName) ||
       (firstName.length >= 4 && lowerMsg.includes(firstName)) ||
@@ -1228,40 +1275,19 @@ async function extractTherapistFromMessage(
 }
 
 // ─────────────────────────────────────────────────────────────
-// Extract intake info using Claude
+// Extract therapy type from free text
 // ─────────────────────────────────────────────────────────────
 
-async function extractIntakeInfo(messageText: string): Promise<{
-  therapy_type: string | null;
-  concerns: string[];
-  pain_summary: string | null;
-  urgency: string | null;
-}> {
-  try {
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 300,
-      system:
-        'Extract therapy intake information from the user message. Return JSON with:\n' +
-        '- "therapy_type": "individual" | "couples" | "family" | null\n' +
-        '- "concerns": array of concern keywords (e.g. ["anxiety", "relationship issues"])\n' +
-        '- "pain_summary": brief 1-2 sentence summary of what they shared\n' +
-        '- "urgency": "immediate" | "this_week" | "exploring" | null\n' +
-        'Return ONLY valid JSON.',
-      messages: [{ role: 'user', content: messageText }],
-    });
-
-    const raw = response.content
-      .filter((block) => block.type === 'text')
-      .map((block) => (block as { type: 'text'; text: string }).text)
-      .join('');
-
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return { therapy_type: null, concerns: [], pain_summary: null, urgency: null };
-
-    return JSON.parse(jsonMatch[0]);
-  } catch (err) {
-    logger.error('extractIntakeInfo failed', { error: (err as Error).message });
-    return { therapy_type: null, concerns: [], pain_summary: null, urgency: null };
+function extractTherapyType(text: string): string | null {
+  const lower = text.toLowerCase();
+  if (lower.includes('individual') || lower.includes('personal') || lower.includes('solo') || lower.includes('myself')) {
+    return 'individual';
   }
+  if (lower.includes('couple') || lower.includes('marriage') || lower.includes('partner') || lower.includes('relationship')) {
+    return 'couples';
+  }
+  if (lower.includes('family') || lower.includes('parent') || lower.includes('child')) {
+    return 'family';
+  }
+  return null;
 }
