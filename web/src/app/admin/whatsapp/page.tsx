@@ -147,6 +147,14 @@ export default function WhatsAppAdminPage() {
   const [showInfo, setShowInfo] = useState(false);
   const [loading, setLoading] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const isFirstLoad = useRef(true);
+
+  // ── Change filter (reset loading so skeleton shows instead of stale data)
+  function changeFilter(f: string) {
+    if (f === filter) return;
+    setFilter(f);
+    setLoading(true);
+  }
 
   // ── Fetch conversations ──────────────────────────────────
   const fetchConversations = useCallback(async () => {
@@ -163,6 +171,7 @@ export default function WhatsAppAdminPage() {
       // ignore
     } finally {
       setLoading(false);
+      isFirstLoad.current = false;
     }
   }, [filter, search]);
 
@@ -287,7 +296,7 @@ export default function WhatsAppAdminPage() {
           {["all", "active", "pending", "escalated"].map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => changeFilter(f)}
               className={`px-2 py-1 text-[10px] rounded-md font-medium capitalize transition-colors ${
                 filter === f
                   ? "bg-[#7B5FB8] text-white"
@@ -311,7 +320,8 @@ export default function WhatsAppAdminPage() {
             <div className="p-4 text-center text-[#8B7AA0] text-xs">No conversations found</div>
           ) : (
             conversations.map((c) => {
-              const name = c.full_name ?? c.whatsapp_number ?? "Unknown";
+              const displayName = c.full_name ?? c.whatsapp_number ?? "Unknown";
+              const phoneDisplay = c.whatsapp_number ?? c.phone ?? "";
               const badge = getStatusBadge(c.session_state);
               const isSelected = c.id === selectedId;
 
@@ -326,17 +336,24 @@ export default function WhatsAppAdminPage() {
                   {/* Avatar */}
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
-                    style={{ backgroundColor: getAvatarColor(name) }}
+                    style={{ backgroundColor: getAvatarColor(phoneDisplay || displayName) }}
                   >
-                    {name[0]?.toUpperCase() ?? "?"}
+                    {displayName[0]?.toUpperCase() ?? "?"}
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-white truncate">
-                        {name}
-                      </span>
+                      <div className="flex flex-col truncate">
+                        <span className="text-sm font-medium text-white truncate">
+                          {displayName}
+                        </span>
+                        {c.full_name && phoneDisplay && (
+                          <span className="text-[10px] text-[#8B7AA0] truncate">
+                            {phoneDisplay}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[10px] text-[#8B7AA0] shrink-0 ml-2">
                         {formatTime(c.last_message_time)}
                       </span>

@@ -34,12 +34,28 @@ router.get('/conversations', async (req: Request, res: Response) => {
   try {
     const filter = (req.query.filter as string) ?? 'all';
     const search = (req.query.search as string) ?? '';
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 50;
-    const offset = (page - 1) * limit;
 
-    // Get leads that have at least one conversation
-    let query = supabaseAdmin
+    // Step 1: Get distinct lead_ids that have WhatsApp conversations
+    const { data: convLeads, error: convErr } = await supabaseAdmin
+      .from('conversations')
+      .select('lead_id')
+      .not('lead_id', 'is', null)
+      .eq('channel', 'whatsapp');
+
+    if (convErr) {
+      logger.error('GET /conversations: conv query failed', { error: convErr.message });
+      res.status(500).json({ error: convErr.message });
+      return;
+    }
+
+    const uniqueLeadIds = [...new Set((convLeads ?? []).map((r) => r.lead_id as string))];
+    if (uniqueLeadIds.length === 0) {
+      res.json({ conversations: [], total: 0 });
+      return;
+    }
+
+    // Step 2: Fetch those leads with their sessions
+    const { data: leads, error: leadErr } = await supabaseAdmin
       .from('leads')
       .select(`
         id, full_name, phone, whatsapp_number, email, country, status, created_at,
@@ -47,54 +63,70 @@ router.get('/conversations', async (req: Request, res: Response) => {
           id, session_state, escalated_to_human, current_therapist_id, payment_link, created_at, updated_at
         )
       `)
-      .order('updated_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .in('id', uniqueLeadIds);
 
-    // Search filter
-    if (search) {
-      query = query.or(`full_name.ilike.%${search}%,whatsapp_number.ilike.%${search}%,phone.ilike.%${search}%`);
-    }
-
-    const { data: leads, error } = await query;
-
-    if (error) {
-      logger.error('GET /conversations failed', { error: error.message });
-      res.status(500).json({ error: error.message });
+    if (leadErr) {
+      logger.error('GET /conversations: lead query failed', { error: leadErr.message });
+      res.status(500).json({ error: leadErr.message });
       return;
     }
 
-    // For each lead, get latest message and unread count
+    // Step 3: Deduplicate by phone number — keep the OLDEST lead (first-registered name wins)
+    const phoneMap = new Map<string, Record<string, unknown>>();
+    const sortedLeads = (leads ?? []).sort(
+      (a, b) => new Date(a.created_at as string).getTime() - new Date(b.created_at as string).getTime()
+    );
+
+    for (const lead of sortedLeads) {
+      const phone = (lead.whatsapp_number as string) ?? (lead.phone as string) ?? null;
+      if (!phone) continue;
+      // Keep the first (oldest) lead for this phone number
+      if (!phoneMap.has(phone)) {
+        phoneMap.set(phone, lead);
+      }
+    }
+
+    const deduped = Array.from(phoneMap.values());
+
+    // Step 4: Enrich each lead with last message + unread count
     const enriched = await Promise.all(
-      (leads ?? []).map(async (lead: Record<string, unknown>) => {
-        // Latest message
+      deduped.map(async (lead) => {
+        const leadId = lead.id as string;
+        const phone = (lead.whatsapp_number as string) ?? (lead.phone as string) ?? '';
+
+        // Get ALL lead_ids for this phone number (to aggregate messages across duplicates)
+        const allLeadIds = sortedLeads
+          .filter((l) => ((l.whatsapp_number as string) ?? (l.phone as string)) === phone)
+          .map((l) => l.id as string);
+
+        // Latest message across all lead records for this phone
         const { data: lastMsg } = await supabaseAdmin
           .from('conversations')
           .select('message_body, direction, created_at, ai_generated')
-          .eq('lead_id', lead.id as string)
+          .in('lead_id', allLeadIds)
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
 
-        // Unread count (inbound messages since last outbound)
+        // Unread count (inbound since last outbound)
+        const { data: lastOutbound } = await supabaseAdmin
+          .from('conversations')
+          .select('created_at')
+          .in('lead_id', allLeadIds)
+          .eq('direction', 'outbound')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        const lastOutboundTime = lastOutbound?.created_at ?? '1970-01-01T00:00:00Z';
+
         const { count: unreadCount } = await supabaseAdmin
           .from('conversations')
           .select('id', { count: 'exact', head: true })
-          .eq('lead_id', lead.id as string)
+          .in('lead_id', allLeadIds)
           .eq('direction', 'inbound')
           .eq('channel', 'whatsapp')
-          .gt(
-            'created_at',
-            // Find last outbound message time
-            (await supabaseAdmin
-              .from('conversations')
-              .select('created_at')
-              .eq('lead_id', lead.id as string)
-              .eq('direction', 'outbound')
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single()
-            ).data?.created_at ?? '1970-01-01T00:00:00Z'
-          );
+          .gt('created_at', lastOutboundTime);
 
         const sessions = lead.ai_agent_sessions as Array<Record<string, unknown>> | null;
         const session = sessions?.[0] ?? null;
@@ -102,35 +134,40 @@ router.get('/conversations', async (req: Request, res: Response) => {
         const escalated = (session?.escalated_to_human as boolean) ?? false;
 
         return {
-          id: lead.id,
-          full_name: lead.full_name,
-          phone: lead.phone,
-          whatsapp_number: lead.whatsapp_number,
-          email: lead.email,
-          country: lead.country,
-          status: lead.status,
+          id: leadId,
+          full_name: lead.full_name as string | null,
+          phone: phone,
+          whatsapp_number: (lead.whatsapp_number as string | null) ?? phone,
+          email: lead.email as string | null,
+          country: lead.country as string | null,
+          status: lead.status as string,
           session_state: sessionState,
-          session_id: session?.id ?? null,
+          session_id: (session?.id as string) ?? null,
           escalated_to_human: escalated,
-          last_message: lastMsg?.message_body ?? null,
-          last_message_direction: lastMsg?.direction ?? null,
-          last_message_time: lastMsg?.created_at ?? lead.created_at,
-          last_message_ai: lastMsg?.ai_generated ?? false,
-          unread_count: unreadCount ?? 0,
+          last_message: (lastMsg?.message_body as string) ?? null,
+          last_message_direction: (lastMsg?.direction as string) ?? null,
+          last_message_time: (lastMsg?.created_at as string) ?? (lead.created_at as string),
+          last_message_ai: (lastMsg?.ai_generated as boolean) ?? false,
+          unread_count: (unreadCount as number) ?? 0,
         };
       })
     );
 
-    // Apply filter
+    // Step 5: Apply filter
+    // "active"   = in-progress (new leads, intake, matching, slot flow — NOT confirmed/escalated)
+    // "pending"  = waiting for payment or slot selection
+    // "escalated"= escalated to human
     let filtered = enriched;
     switch (filter) {
       case 'active':
         filtered = enriched.filter(
-          (c) => !['confirmed', 'escalated', 'none'].includes(c.session_state)
+          (c) => !['confirmed', 'escalated'].includes(c.session_state)
         );
         break;
       case 'pending':
-        filtered = enriched.filter((c) => c.session_state === 'payment_sent');
+        filtered = enriched.filter(
+          (c) => ['payment_sent', 'slot_relay', 'slot_request'].includes(c.session_state)
+        );
         break;
       case 'escalated':
         filtered = enriched.filter(
@@ -139,12 +176,23 @@ router.get('/conversations', async (req: Request, res: Response) => {
         break;
     }
 
-    // Sort by last message time (most recent first)
+    // Step 6: Sort by last message time (most recent first)
     filtered.sort((a, b) => {
       const ta = new Date(a.last_message_time).getTime();
       const tb = new Date(b.last_message_time).getTime();
       return tb - ta;
     });
+
+    // Apply search filter on the final result
+    if (search) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (c) =>
+          (c.full_name?.toLowerCase().includes(q)) ||
+          (c.whatsapp_number?.includes(q)) ||
+          (c.phone?.includes(q))
+      );
+    }
 
     res.json({ conversations: filtered, total: filtered.length });
   } catch (err) {
