@@ -1175,7 +1175,14 @@ async function handleTherapistSlotResponse(
       'therapist_declined_notify'
     );
 
-    await handleMoreOptions(lead as Lead, session as AgentSession);
+    // Track this therapist as declined so handleMoreOptions skips them
+    const declinedIds: string[] = (session.context_json?.declined_therapist_ids as string[]) ?? [];
+    if (!declinedIds.includes(therapist.id)) declinedIds.push(therapist.id);
+    await updateSession(session.id, {
+      context_json: { ...session.context_json, declined_therapist_ids: declinedIds },
+    });
+
+    await handleMoreOptions(lead as Lead, { ...session, context_json: { ...session.context_json, declined_therapist_ids: declinedIds } } as AgentSession);
     return;
   }
 
@@ -1626,7 +1633,10 @@ async function handleMoreOptions(
   lead: Lead,
   session: AgentSession
 ): Promise<void> {
-  const excludeId = session.current_therapist_id;
+  // Collect all therapist IDs to exclude (declined + current)
+  const declinedIds: string[] = (session.context_json?.declined_therapist_ids as string[]) ?? [];
+  const excludeIds = new Set<string>(declinedIds);
+  if (session.current_therapist_id) excludeIds.add(session.current_therapist_id);
 
   const { data: refreshedLead } = await supabaseAdmin
     .from('leads')
@@ -1635,7 +1645,7 @@ async function handleMoreOptions(
     .single();
 
   const matched = await matchTherapists((refreshedLead as Lead) || lead);
-  const nextTherapist = matched.find((t) => t.id !== excludeId);
+  const nextTherapist = matched.find((t) => !excludeIds.has(t.id));
 
   if (nextTherapist) {
     await updateSession(session.id, {

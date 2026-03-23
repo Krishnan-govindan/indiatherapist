@@ -142,6 +142,21 @@ async function processInboundMessage(
       break;
   }
 
+  // ── Idempotency check: skip if we've already processed this message ──
+  // WhatsApp sometimes retries webhooks, causing duplicate processing
+  const { data: alreadyProcessed } = await supabaseAdmin
+    .from('conversations')
+    .select('id')
+    .eq('meta_message_id', message.id)
+    .eq('direction', 'inbound')
+    .limit(1)
+    .single();
+
+  if (alreadyProcessed) {
+    logger.warn('Duplicate webhook skipped', { messageId: message.id, fromE164 });
+    return;
+  }
+
   // Store media URL in conversations if present
   if (mediaUrl) {
     await supabaseAdmin.from('conversations').insert({
