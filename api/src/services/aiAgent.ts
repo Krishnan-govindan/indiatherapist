@@ -1660,13 +1660,16 @@ async function handleMoreOptions(
 
     await showTherapistProfile((refreshedLead as Lead) || lead, nextTherapist);
   } else {
-    // No more options — show the full list again
+    // No more auto-matched options — send therapist directory link
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://web-production-7bea1.up.railway.app';
     await sendAndLog(
       lead,
-      `I've shown you our best matches. Let me show the full list again so you can choose:`,
-      'no_more_options'
+      `I've checked our best therapist matches but none are available right now. 🙏\n\n` +
+      `You can browse our full therapist directory and pick someone who feels right for you:\n\n` +
+      `🔗 ${appUrl}/therapists\n\n` +
+      `Once you find a therapist you like, click *Book a Session* on their profile and fill in your details — we'll contact them right away!`,
+      'no_more_options_directory'
     );
-    await showTherapistList((refreshedLead as Lead) || lead, session);
   }
 }
 

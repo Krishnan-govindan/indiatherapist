@@ -2,8 +2,11 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { supabaseAdmin } from '../lib/supabase';
 import { logger } from '../lib/logger';
 import { triggerOutboundCall } from '../services/voiceCaller';
-import { sendTemplateMessage, sendTextMessage } from '../services/whatsapp';
-import type { Lead } from '../lib/types';
+import { sendTemplateMessage, sendTextMessage, sendInteractiveButtons } from '../services/whatsapp';
+import type { Lead, Therapist } from '../lib/types';
+
+const AI_WA_NUMBER = process.env.AI_WA_NUMBER ?? '+18568782862';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://web-production-7bea1.up.railway.app';
 
 const router = Router();
 
@@ -81,6 +84,152 @@ async function scheduleFollowUpSequence(leadId: string): Promise<void> {
 }
 
 // ─────────────────────────────────────────────────────────────
+// contactPreferredTherapist
+// Called after lead create/update when a preferred_therapist_slug
+// is submitted. Directly contacts the therapist via WhatsApp YES/NO
+// and tells the client we're checking availability.
+// ─────────────────────────────────────────────────────────────
+
+async function contactPreferredTherapist(lead: Lead, therapistSlug: string): Promise<void> {
+  // Look up therapist by slug
+  const { data: therapistData } = await supabaseAdmin
+    .from('therapists')
+    .select('*')
+    .eq('slug', therapistSlug)
+    .eq('is_active', true)
+    .single();
+
+  if (!therapistData) {
+    logger.warn('contactPreferredTherapist: therapist not found', { therapistSlug });
+    return;
+  }
+
+  const therapist = therapistData as Therapist;
+
+  // Create appointment
+  const { data: appointment, error: aptErr } = await supabaseAdmin
+    .from('appointments')
+    .insert({
+      lead_id: lead.id,
+      therapist_id: therapist.id,
+      status: 'pending_therapist',
+      session_duration_min: 60,
+      therapist_timezone: therapist.timezone,
+      client_timezone: lead.timezone ?? null,
+    })
+    .select('id')
+    .single();
+
+  if (aptErr || !appointment) {
+    logger.error('contactPreferredTherapist: failed to create appointment', { error: aptErr?.message });
+    return;
+  }
+
+  // Create slot offer
+  await supabaseAdmin.from('slot_offers').insert({
+    appointment_id: appointment.id,
+    therapist_id: therapist.id,
+    lead_id: lead.id,
+  });
+
+  // Update or create ai_agent_session
+  const { data: existingSession } = await supabaseAdmin
+    .from('ai_agent_sessions')
+    .select('id')
+    .eq('lead_id', lead.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (existingSession) {
+    await supabaseAdmin
+      .from('ai_agent_sessions')
+      .update({
+        session_state: 'slot_relay',
+        current_therapist_id: therapist.id,
+        slot_offer_sent: true,
+        therapist_confirmed: false,
+        escalated_to_human: false,
+        context_json: { appointment_id: appointment.id },
+      })
+      .eq('id', existingSession.id);
+  } else {
+    await supabaseAdmin.from('ai_agent_sessions').insert({
+      lead_id: lead.id,
+      session_state: 'slot_relay',
+      current_therapist_id: therapist.id,
+      slot_offer_sent: true,
+      context_json: { appointment_id: appointment.id },
+    });
+  }
+
+  // Update lead
+  await supabaseAdmin
+    .from('leads')
+    .update({ matched_therapist_id: therapist.id, status: 'slot_offered' })
+    .eq('id', lead.id);
+
+  // Send therapist YES/NO buttons
+  if (therapist.whatsapp_number) {
+    const clientName = lead.full_name ?? 'A client';
+    const clientConcerns = lead.presenting_issues?.join(', ') || lead.pain_summary || 'Not specified';
+    const clientTherapyType = lead.therapy_type || 'Not specified';
+
+    const therapistMsg =
+      `🙏 Hi ${therapist.full_name.split(' ')[0]}!\n\n` +
+      `A client would like to book a session with you.\n\n` +
+      `👤 Client: ${clientName}\n` +
+      `📋 Looking for: ${clientTherapyType} therapy\n` +
+      `💭 Concern: ${clientConcerns}\n\n` +
+      `Are you available to take this client?`;
+
+    await sendInteractiveButtons(therapist.whatsapp_number, therapistMsg, [
+      { id: 'therapist_yes', title: 'Yes, available' },
+      { id: 'therapist_no', title: 'Not available' },
+    ]);
+
+    await supabaseAdmin.from('conversations').insert({
+      therapist_id: therapist.id,
+      channel: 'whatsapp',
+      direction: 'outbound',
+      from_number: AI_WA_NUMBER,
+      to_number: therapist.whatsapp_number,
+      message_body: therapistMsg,
+      ai_generated: true,
+      ai_intent: 'availability_request_web',
+    });
+  }
+
+  // Notify client on WhatsApp
+  const clientWa = lead.whatsapp_number ?? lead.phone ?? '';
+  if (clientWa) {
+    const clientFirstName = lead.full_name?.split(' ')[0] ?? 'there';
+    await sendTextMessage(
+      clientWa,
+      `Hi ${clientFirstName}! 🙏 We've reached out to *${therapist.full_name}* to check their availability.\n\nWe'll WhatsApp you as soon as they confirm. This usually takes a few hours.\n\nThank you for your patience! 💜`
+    );
+
+    await supabaseAdmin.from('conversations').insert({
+      lead_id: lead.id,
+      channel: 'whatsapp',
+      direction: 'outbound',
+      from_number: AI_WA_NUMBER,
+      to_number: clientWa,
+      message_body: `Availability request sent to ${therapist.full_name}`,
+      ai_generated: true,
+      ai_intent: 'therapist_request_web',
+    });
+  }
+
+  logger.info('contactPreferredTherapist: therapist contacted', {
+    leadId: lead.id,
+    therapistId: therapist.id,
+    therapistName: therapist.full_name,
+    appointmentId: appointment.id,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
 // POST /api/leads — intake form submission
 // ─────────────────────────────────────────────────────────────
 
@@ -93,6 +242,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     therapy_type,
     presenting_issues,
     preferred_languages,
+    preferred_therapist_slug,
     source,
     utm_source,
     utm_medium,
@@ -101,6 +251,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     city,
     timezone,
     urgency,
+    concern,
+    support_type,
   } = req.body as Record<string, unknown>;
 
   // ── 1. Validate required fields ──────────────────────────────
@@ -139,14 +291,19 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   if (duplicate) {
     logger.info('Duplicate lead found — updating', { leadId: duplicate.id, phone: normalisedPhone });
 
+    // Normalize concern string → presenting_issues array (from /book form)
+    const normalizedIssues = typeof concern === 'string' && concern.trim()
+      ? concern.split(',').map((c) => c.trim()).filter(Boolean)
+      : Array.isArray(presenting_issues) ? presenting_issues : null;
+
     const { data: updated, error: updateError } = await supabaseAdmin
       .from('leads')
       .update({
         full_name: (full_name as string).trim(),
         email: email ?? duplicate.email,
         whatsapp_number: waNumber,
-        therapy_type: therapy_type ?? duplicate.therapy_type,
-        presenting_issues: presenting_issues ?? duplicate.presenting_issues,
+        therapy_type: (support_type as string | undefined) ?? (therapy_type as string | undefined) ?? duplicate.therapy_type,
+        presenting_issues: normalizedIssues ?? duplicate.presenting_issues,
         preferred_languages: preferred_languages ?? duplicate.preferred_languages,
         urgency: urgency ?? duplicate.urgency,
       })
@@ -163,6 +320,11 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     lead = updated as Lead;
   } else {
     // ── 3. Insert new lead ─────────────────────────────────────
+    // Normalize concern string → presenting_issues array (from /book form)
+    const normalizedIssuesNew = typeof concern === 'string' && concern.trim()
+      ? concern.split(',').map((c) => c.trim()).filter(Boolean)
+      : Array.isArray(presenting_issues) ? presenting_issues : [];
+
     const { data: created, error: insertError } = await supabaseAdmin
       .from('leads')
       .insert({
@@ -170,8 +332,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         phone: normalisedPhone,
         email: email ?? null,
         whatsapp_number: waNumber,
-        therapy_type: therapy_type ?? null,
-        presenting_issues: Array.isArray(presenting_issues) ? presenting_issues : [],
+        therapy_type: (support_type as string | undefined) ?? (therapy_type as string | undefined) ?? null,
+        presenting_issues: normalizedIssuesNew,
         preferred_languages: Array.isArray(preferred_languages) ? preferred_languages : [],
         status: 'new',
         source: typeof source === 'string' ? source : 'website',
@@ -197,8 +359,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     logger.info('New lead created', { leadId: lead.id, phone: normalisedPhone });
   }
 
+  const hasPreferredTherapist =
+    typeof preferred_therapist_slug === 'string' && preferred_therapist_slug.trim() !== '';
+
   // Respond early — all following steps are non-blocking
-  res.status(duplicate ? 200 : 201).json({ success: true, leadId: lead.id });
+  res.status(duplicate ? 200 : 201).json({
+    success: true,
+    leadId: lead.id,
+    therapist_contacted: hasPreferredTherapist,
+  });
 
   // ── 4. Log analytics event ───────────────────────────────────
   supabaseAdmin
@@ -208,7 +377,20 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       if (error) logger.error('analytics insert failed', { error: error.message });
     });
 
-  // ── 5. Trigger Vapi outbound call ────────────────────────────
+  // ── 5. If preferred therapist slug provided, contact them directly ──
+  if (hasPreferredTherapist) {
+    contactPreferredTherapist(lead, (preferred_therapist_slug as string).trim()).catch((err) => {
+      logger.error('contactPreferredTherapist failed', {
+        leadId: lead.id,
+        therapistSlug: preferred_therapist_slug,
+        error: (err as Error).message,
+      });
+    });
+    // Skip standard welcome template and Vapi call — therapist contact handles WA outreach
+    return;
+  }
+
+  // ── 6. Trigger Vapi outbound call (no therapist slug case) ──────────────
   triggerOutboundCall(lead).catch((err) => {
     logger.error('Vapi call failed — will rely on WhatsApp fallback', {
       leadId: lead.id,
@@ -216,7 +398,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     });
   });
 
-  // ── 6. Send WhatsApp welcome template ───────────────────────
+  // ── 7. Send WhatsApp welcome template ───────────────────────
   // Must use an approved template for proactive outreach (no 24-hr window open yet).
   // Template name: welcome_message  |  Language: en  |  No variables (static body)
   const waTarget = lead.whatsapp_number ?? lead.phone ?? '';
