@@ -26,6 +26,14 @@ import {
   updateLeadContextSummary,
 } from '../services/embeddingService';
 import type { Therapist, Lead, Appointment } from '../lib/types';
+import { createSessionPaymentLink } from '../services/stripeService';
+import {
+  KNOWLEDGE_BASE,
+  BANNED_PHRASES,
+  STATE_PROMPTS,
+  FAQ_RESPONSES,
+  SAFE_FALLBACK,
+} from '../services/agentKnowledge';
 
 // ─────────────────────────────────────────────────────────────
 // Constants
@@ -39,15 +47,28 @@ const SYSTEM_PROMPT = `You are Pooja, the AI assistant for ${PLATFORM_NAME} — 
 
 Your personality: Warm, empathetic, culturally aware, professional. Never sound robotic. Speak like a caring friend who understands NRI struggles.
 
-Rules:
+RULES:
 1. Always address the client by their first name if known
 2. If client mentions a specific therapist by name, match to the therapist list
 3. Never share therapist personal phone numbers until session is confirmed
 4. If you cannot help (refund, complaint, crisis), escalate to human support
 5. Always respond in the same language the client writes in
-6. Keep responses concise — this is WhatsApp, not email
+6. Keep responses concise (2-3 sentences max) — this is WhatsApp, not email
 7. Use emoji sparingly and naturally
-8. Be culturally sensitive to Indian values and NRI experiences`;
+8. Be culturally sensitive to Indian values and NRI experiences
+
+NEVER SAY ANY OF THE FOLLOWING (these are strictly prohibited):
+- "Our team will send you availability" or ANY variation of this
+- "Booking link" (unless you are sending an actual Stripe payment link right now)
+- "We will schedule your session" — the platform does NOT schedule sessions
+- "Pick a time that works for you" — scheduling is between client and therapist directly
+- "We will get back to you with times" or "available time slots"
+- "Calendar link", "Zoom link", "Google Meet link", "video call link"
+- "We will book your session" or "confirm your session time"
+- ANY process, feature, or workflow NOT described in the platform knowledge below
+- Do NOT make up or invent any processes that are not explicitly described below
+
+${KNOWLEDGE_BASE}`;
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -465,11 +486,17 @@ async function generateAIResponse(
 
   conversationHistory.push({ role: 'user', content: userMessage });
 
+  // Get state-specific instructions
+  const statePrompt = STATE_PROMPTS[session.session_state] ?? '';
+
+  // Shorter max_tokens for confirmed state to reduce hallucination
+  const maxTokens = session.session_state === 'confirmed' ? 250 : 400;
+
   try {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5',
-      max_tokens: 500,
-      system: `${SYSTEM_PROMPT}\n\n=== CONTEXT ===\n${contextParts.join('\n')}`,
+      max_tokens: maxTokens,
+      system: `${SYSTEM_PROMPT}\n\n=== CURRENT STATE INSTRUCTIONS ===\n${statePrompt}\n\n=== CONTEXT ===\n${contextParts.join('\n')}`,
       messages: conversationHistory,
     });
 
@@ -478,11 +505,32 @@ async function generateAIResponse(
       .map((block) => (block as { type: 'text'; text: string }).text)
       .join('');
 
-    return text.trim();
+    const trimmed = text.trim();
+
+    // Guardrail: check for banned phrases
+    return sanitizeResponse(trimmed);
   } catch (err) {
     logger.error('generateAIResponse failed', { error: (err as Error).message });
     return "I'm having a moment \u2014 let me get back to you shortly. \u{1F64F}";
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Response guardrail — catches banned phrases before sending
+// ─────────────────────────────────────────────────────────────
+
+function sanitizeResponse(text: string): string {
+  const lower = text.toLowerCase();
+  for (const phrase of BANNED_PHRASES) {
+    if (lower.includes(phrase)) {
+      logger.warn('Banned phrase detected in AI response', {
+        phrase,
+        originalResponse: text.slice(0, 200),
+      });
+      return SAFE_FALLBACK;
+    }
+  }
+  return text;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1022,21 +1070,185 @@ async function handleTherapistMessage(
 }
 
 // ─────────────────────────────────────────────────────────────
-// STATE: confirmed — Session connected, handle follow-ups
+// STATE: confirmed — Intent detection + template responses
 // ─────────────────────────────────────────────────────────────
+
+const PAYMENT_KEYWORDS = /pay|payment|cost|fee|how much|price|rate|invoice|bill|charge|amount|stripe/i;
+const SCHEDULING_KEYWORDS = /when|schedule|time|slot|available|availability|calendar|appointment|session time|next step/i;
+const CONTACT_KEYWORDS = /contact|number|phone|reach|whatsapp|details|therapist number/i;
+const SWITCH_KEYWORDS = /different|change|another|switch|new therapist|other therapist/i;
+const CANCEL_KEYWORDS = /cancel|reschedule|postpone/i;
+const THANKS_KEYWORDS = /thank|thanks|great|awesome|perfect|good|wonderful|amazing/i;
+const HOW_IT_WORKS_KEYWORDS = /how does|how do|how it works|what happens|process|explain/i;
 
 async function handleConfirmed(
   lead: Lead,
   session: AgentSession,
   messageText: string
 ): Promise<void> {
+  const lower = messageText.toLowerCase();
+
+  // 1. Payment intent → auto-generate Stripe payment link
+  if (PAYMENT_KEYWORDS.test(lower)) {
+    await handlePaymentRequest(lead, session);
+    return;
+  }
+
+  // 2. Scheduling/availability → template: coordinate with therapist
+  if (SCHEDULING_KEYWORDS.test(lower)) {
+    const { name, phone } = await getTherapistDetails(session);
+    await sendAndLog(
+      lead,
+      `You can coordinate your session timing directly with *${name}* on WhatsApp: ${phone}\n\nThey'll work out a time that suits both of you. 🙏`,
+      'confirmed_scheduling'
+    );
+    return;
+  }
+
+  // 3. Contact re-request → re-send therapist details
+  if (CONTACT_KEYWORDS.test(lower)) {
+    const { name, phone } = await getTherapistDetails(session);
+    await sendAndLog(
+      lead,
+      `Here are your therapist's details:\n\n👩‍⚕️ *${name}*\n📱 WhatsApp: ${phone}\n\nYou can message them directly to coordinate your session. 🙏`,
+      'confirmed_contact'
+    );
+    return;
+  }
+
+  // 4. Switch therapist → reset to intake
+  if (SWITCH_KEYWORDS.test(lower)) {
+    await sendAndLog(
+      lead,
+      `Of course! Let me help you find a different therapist.`,
+      'confirmed_switch'
+    );
+    await updateSession(session.id, { session_state: 'intake' });
+    await showTherapistList(lead, session);
+    return;
+  }
+
+  // 5. Cancel/reschedule → template
+  if (CANCEL_KEYWORDS.test(lower)) {
+    const { name, phone } = await getTherapistDetails(session);
+    await sendAndLog(
+      lead,
+      `To reschedule or cancel, please message *${name}* directly: ${phone}\n\nNeed more help? Type *SUPPORT*. 🙏`,
+      'confirmed_cancel'
+    );
+    return;
+  }
+
+  // 6. Thank you → warm template
+  if (THANKS_KEYWORDS.test(lower)) {
+    await sendAndLog(
+      lead,
+      `You're welcome! 🙏 Wishing you a wonderful session. If you need anything else, I'm here to help.`,
+      'confirmed_thanks'
+    );
+    return;
+  }
+
+  // 7. How it works → FAQ response
+  if (HOW_IT_WORKS_KEYWORDS.test(lower)) {
+    await sendAndLog(lead, FAQ_RESPONSES.how_it_works, 'confirmed_faq');
+    return;
+  }
+
+  // 8. Fallback → Claude with tight guardrails
   const aiReply = await generateAIResponse(
     lead,
     session,
     messageText,
-    'The client has been connected with their therapist. Contact details have been shared. Help with any follow-up questions. If they want to book another session or see a different therapist, guide them.'
+    STATE_PROMPTS.confirmed
   );
-  await sendAndLog(lead, aiReply, 'confirmed');
+  await sendAndLog(lead, aiReply, 'confirmed_ai');
+}
+
+// ─────────────────────────────────────────────────────────────
+// Payment link auto-generation
+// ─────────────────────────────────────────────────────────────
+
+async function handlePaymentRequest(
+  lead: Lead,
+  session: AgentSession
+): Promise<void> {
+  const therapistId = session.current_therapist_id;
+  const appointmentId = session.context_json?.appointment_id as string | undefined;
+
+  if (!therapistId || !appointmentId) {
+    await sendAndLog(
+      lead,
+      `Let me connect you with our support team for payment assistance. Type *SUPPORT* or I'll transfer you now. 🙏`,
+      'payment_no_context'
+    );
+    return;
+  }
+
+  // Check if we already sent a payment link
+  if (session.stripe_link_sent && session.payment_link) {
+    const { name } = await getTherapistDetails(session);
+    await sendAndLog(
+      lead,
+      `Here's your payment link for your session with *${name}*:\n\n💳 ${session.payment_link}\n\n🔒 Secured by Stripe`,
+      'payment_link_resent'
+    );
+    return;
+  }
+
+  try {
+    const paymentUrl = await createSessionPaymentLink(lead.id, therapistId, appointmentId);
+
+    // Fetch therapist for name and rate
+    const { data: therapist } = await supabaseAdmin
+      .from('therapists')
+      .select('full_name, session_rate_cents')
+      .eq('id', therapistId)
+      .single();
+
+    const rateUsd = therapist ? `$${(therapist.session_rate_cents / 100).toFixed(0)}` : '';
+    const therapistName = therapist?.full_name ?? 'your therapist';
+
+    await sendAndLog(
+      lead,
+      `Here's your secure payment link for your session with *${therapistName}* (${rateUsd}):\n\n💳 ${paymentUrl}\n\n🔒 Secured by Stripe\n✅ You'll receive a confirmation once payment is complete.`,
+      'payment_link_sent'
+    );
+
+    await updateSession(session.id, {
+      payment_link: paymentUrl,
+      stripe_link_sent: true,
+    });
+  } catch (err) {
+    logger.error('handlePaymentRequest failed', { error: (err as Error).message });
+    await sendAndLog(
+      lead,
+      `I'm having trouble generating your payment link. Let me connect you with support. 🙏`,
+      'payment_error'
+    );
+    await escalateToHuman(lead, session, 'Payment link generation failed', `Error: ${(err as Error).message}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Get therapist name + phone for templates
+// ─────────────────────────────────────────────────────────────
+
+async function getTherapistDetails(
+  session: AgentSession
+): Promise<{ name: string; phone: string }> {
+  if (!session.current_therapist_id) {
+    return { name: 'your therapist', phone: 'their WhatsApp number' };
+  }
+  const { data: t } = await supabaseAdmin
+    .from('therapists')
+    .select('full_name, whatsapp_number')
+    .eq('id', session.current_therapist_id)
+    .single();
+  return {
+    name: t?.full_name ?? 'your therapist',
+    phone: t?.whatsapp_number ?? 'their WhatsApp number',
+  };
 }
 
 // ─────────────────────────────────────────────────────────────
