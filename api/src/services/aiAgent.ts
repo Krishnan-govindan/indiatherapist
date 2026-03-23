@@ -886,7 +886,15 @@ async function handleSlotRelay(
 
 // ─────────────────────────────────────────────────────────────
 // Therapist message handler (separate from client flow)
+// Handles 3 scenarios:
+// A) Active slot offer → YES/NO/unrecognized with client details
+// B) Recently confirmed session → payment/client info/general
+// C) No context → simple acknowledgment
 // ─────────────────────────────────────────────────────────────
+
+function clientRefId(leadId: string): string {
+  return `IT-${leadId.slice(0, 8).toUpperCase()}`;
+}
 
 async function handleTherapistMessage(
   therapist: Therapist,
@@ -895,7 +903,7 @@ async function handleTherapistMessage(
 ): Promise<void> {
   const lowerMsg = messageText.trim().toLowerCase();
 
-  // Find the most recent open slot offer for this therapist
+  // ── SCENARIO A: Check for active (non-expired) slot offer ──
   const { data: slotOffer } = await supabaseAdmin
     .from('slot_offers')
     .select('id, appointment_id, lead_id')
@@ -905,15 +913,88 @@ async function handleTherapistMessage(
     .limit(1)
     .single();
 
-  if (!slotOffer) {
-    logger.info('Therapist message but no open slot offer', { therapistId: therapist.id });
-    // Acknowledge but no action needed
-    await sendTextMessage(
-      therapist.whatsapp_number!,
-      `Thank you for your message! There are no pending client requests at the moment. We'll reach out when a new client wants to book with you. \u{1F64F}`
-    );
+  if (slotOffer) {
+    await handleTherapistSlotResponse(therapist, slotOffer, messageText, interactiveReplyId);
     return;
   }
+
+  // ── SCENARIO B: Check for recently confirmed session (last 7 days) ──
+  const { data: recentSession } = await supabaseAdmin
+    .from('ai_agent_sessions')
+    .select('id, lead_id, current_therapist_id, context_json, payment_link, stripe_link_sent')
+    .eq('current_therapist_id', therapist.id)
+    .eq('session_state', 'confirmed')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (recentSession) {
+    const { data: recentLead } = await supabaseAdmin
+      .from('leads')
+      .select('*')
+      .eq('id', recentSession.lead_id)
+      .single();
+
+    if (recentLead) {
+      const rl = recentLead as Lead;
+      const refId = clientRefId(rl.id);
+      const clientName = rl.full_name ?? 'Client';
+
+      // Therapist asks about payment → auto-send payment link to client
+      if (/payment|pay|charge|bill|send payment|invoice|collect|fee/i.test(lowerMsg)) {
+        await autoSendPaymentForTherapist(therapist, rl, recentSession);
+        return;
+      }
+
+      // Therapist asks about client details
+      if (/client|details|info|who|name|number/i.test(lowerMsg)) {
+        const clientPhone = rl.whatsapp_number ?? rl.phone ?? '';
+        const clientConcerns = rl.presenting_issues?.join(', ') || 'Not specified';
+        await sendTextMessage(
+          therapist.whatsapp_number!,
+          `Here are your client details:\n\n` +
+          `🆔 ${refId}\n` +
+          `👤 *${clientName}*\n` +
+          `📱 WhatsApp: ${clientPhone}\n` +
+          `💭 Concern: ${clientConcerns}\n\n` +
+          `You can reach them directly on WhatsApp. 🙏`
+        );
+        return;
+      }
+
+      // General message from therapist with active client
+      await sendTextMessage(
+        therapist.whatsapp_number!,
+        `Thanks for your message! 🙏\n\n` +
+        `Your recent client: *${clientName}* (${refId})\n\n` +
+        `Need help? Here's what I can do:\n` +
+        `• Say *"send payment"* — I'll send the payment link to ${clientName}\n` +
+        `• Say *"client details"* — I'll resend their info\n` +
+        `• Say *"SUPPORT"* — Connect with our team`
+      );
+      return;
+    }
+  }
+
+  // ── SCENARIO C: No active offers, no recent sessions ──
+  logger.info('Therapist message, no active context', { therapistId: therapist.id });
+  await sendTextMessage(
+    therapist.whatsapp_number!,
+    `Thank you for your message! 🙏 There are no pending client requests at the moment. We'll reach out when a new client wants to book with you.`
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Handle therapist response to an active slot offer (YES/NO)
+// ─────────────────────────────────────────────────────────────
+
+async function handleTherapistSlotResponse(
+  therapist: Therapist,
+  slotOffer: { id: string; appointment_id: string; lead_id: string },
+  messageText: string,
+  interactiveReplyId?: string
+): Promise<void> {
+  const lowerMsg = messageText.trim().toLowerCase();
 
   // Get the client lead and session
   const { data: lead } = await supabaseAdmin
@@ -932,6 +1013,12 @@ async function handleTherapistMessage(
 
   if (!lead || !session) return;
 
+  const clientName = (lead as Lead).full_name ?? 'Client';
+  const clientPhone = (lead as Lead).whatsapp_number ?? (lead as Lead).phone ?? '';
+  const clientConcerns = (lead as Lead).presenting_issues?.join(', ') || 'Not specified';
+  const clientTherapyType = (lead as Lead).therapy_type || 'Not specified';
+  const refId = clientRefId((lead as Lead).id);
+
   // ── Therapist says YES ──────────────────────────────────
   const isYes =
     interactiveReplyId === 'therapist_yes' ||
@@ -941,15 +1028,13 @@ async function handleTherapistMessage(
     // Update records
     await supabaseAdmin
       .from('ai_agent_sessions')
-      .update({
-        therapist_confirmed: true,
-        session_state: 'confirmed',
-      })
+      .update({ therapist_confirmed: true, session_state: 'confirmed' })
       .eq('id', session.id);
 
+    // CRITICAL FIX: expire the slot offer so future messages don't re-trigger
     await supabaseAdmin
       .from('slot_offers')
-      .update({ therapist_responded_at: new Date().toISOString() })
+      .update({ is_expired: true, therapist_responded_at: new Date().toISOString() })
       .eq('id', slotOffer.id);
 
     await supabaseAdmin
@@ -962,29 +1047,27 @@ async function handleTherapistMessage(
       .update({ status: 'converted' })
       .eq('id', lead.id);
 
-    const clientName = (lead as Lead).full_name ?? 'Client';
-    const clientPhone = (lead as Lead).whatsapp_number ?? (lead as Lead).phone ?? '';
-    const clientConcerns = (lead as Lead).presenting_issues?.join(', ') || 'Not specified';
-
-    // Send client the good news + therapist details
+    // Send client: good news + therapist details
     await sendAndLog(
       lead as Lead,
-      `Great news! \u{1F389} *${therapist.full_name}* is available and has confirmed your session!\n\n` +
-      `\u{1F4DE} You can now coordinate directly with your therapist:\n` +
-      `\u{1F469}\u{200D}\u{2695}\u{FE0F} *${therapist.full_name}*\n` +
-      `\u{1F4F1} WhatsApp: ${therapist.whatsapp_number}\n\n` +
-      `Please reach out to them to schedule your session time. We wish you a wonderful experience! \u{1F64F}`,
+      `Great news! 🎉 *${therapist.full_name}* is available and has confirmed your session!\n\n` +
+      `📞 You can now coordinate directly with your therapist:\n` +
+      `👩‍⚕️ *${therapist.full_name}*\n` +
+      `📱 WhatsApp: ${therapist.whatsapp_number}\n\n` +
+      `Please reach out to them to schedule your session time. 🙏`,
       'session_confirmed'
     );
 
-    // Send therapist the client details
+    // Send therapist: client details with reference ID
     await sendTextMessage(
       therapist.whatsapp_number!,
-      `\u{2705} Confirmed! Here are the client details:\n\n` +
-      `\u{1F464} *${clientName}*\n` +
-      `\u{1F4F1} WhatsApp: ${clientPhone}\n` +
-      `\u{1F4AD} Concern: ${clientConcerns}\n\n` +
-      `Please reach out to them to schedule the session. Thank you for being part of ${PLATFORM_NAME}! \u{1F64F}`
+      `✅ Confirmed! Here are the client details:\n\n` +
+      `🆔 ${refId}\n` +
+      `👤 *${clientName}*\n` +
+      `📱 WhatsApp: ${clientPhone}\n` +
+      `📋 Looking for: ${clientTherapyType} therapy\n` +
+      `💭 Concern: ${clientConcerns}\n\n` +
+      `Please reach out to them to schedule the session. Thank you for being part of ${PLATFORM_NAME}! 🙏`
     );
 
     // Log therapist outbound
@@ -994,25 +1077,64 @@ async function handleTherapistMessage(
       direction: 'outbound',
       from_number: AI_WA_NUMBER,
       to_number: therapist.whatsapp_number,
-      message_body: `Client details shared: ${clientName} (${clientPhone})`,
+      message_body: `Client details shared: ${clientName} (${refId})`,
       ai_generated: true,
       ai_intent: 'session_confirmed_therapist',
     });
 
-    // Notify support team
+    // Auto-generate payment link and send to client
+    let paymentUrl = '';
+    try {
+      paymentUrl = await createSessionPaymentLink(
+        (lead as Lead).id,
+        therapist.id,
+        slotOffer.appointment_id
+      );
+
+      const rateUsd = (therapist.session_rate_cents / 100).toFixed(0);
+
+      await sendAndLog(
+        lead as Lead,
+        `💳 Here's your payment link for your session with *${therapist.full_name}* ($${rateUsd}):\n\n` +
+        `${paymentUrl}\n\n` +
+        `🔒 Secured by Stripe\n` +
+        `✅ Once payment is done, please share the confirmation with your therapist.`,
+        'payment_link_auto'
+      );
+
+      // Update session with payment link
+      await supabaseAdmin
+        .from('ai_agent_sessions')
+        .update({ payment_link: paymentUrl, stripe_link_sent: true })
+        .eq('id', session.id);
+
+    } catch (err) {
+      logger.error('Auto payment link failed after therapist YES', {
+        error: (err as Error).message,
+        leadId: (lead as Lead).id,
+        therapistId: therapist.id,
+      });
+    }
+
+    // Notify support team with full details
     await sendTextMessage(
       SUPPORT_WA_NUMBER,
-      `\u{1F389} *[CLIENT CONVERTED]*\n\n` +
-      `\u{1F464} Client: ${clientName} (${clientPhone})\n` +
-      `\u{1F469}\u{200D}\u{2695}\u{FE0F} Therapist: ${therapist.full_name}\n` +
-      `\u{1F4CB} Concern: ${clientConcerns}\n\n` +
-      `Session confirmed \u{2014} details have been shared with both parties.`
+      `🎉 *[CLIENT CONVERTED]*\n\n` +
+      `🆔 ${refId}\n` +
+      `👤 Client: ${clientName} (${clientPhone})\n` +
+      `👩‍⚕️ Therapist: ${therapist.full_name}\n` +
+      `📋 Type: ${clientTherapyType} therapy\n` +
+      `💭 Concern: ${clientConcerns}\n` +
+      (paymentUrl ? `💳 Payment link sent: ${paymentUrl}\n` : `⚠️ Payment link not generated\n`) +
+      `\nSession confirmed — details shared with both parties.`
     );
 
-    logger.info('Session confirmed \u{2014} details shared', {
-      leadId: lead.id,
+    logger.info('Session confirmed — details + payment shared', {
+      leadId: (lead as Lead).id,
+      refId,
       therapistId: therapist.id,
       therapistName: therapist.full_name,
+      paymentLinkSent: !!paymentUrl,
     });
 
     return;
@@ -1026,17 +1148,16 @@ async function handleTherapistMessage(
   if (isNo) {
     await sendTextMessage(
       therapist.whatsapp_number!,
-      `No problem! Thank you for letting us know. We'll find another therapist for this client. \u{1F64F}`
+      `No problem! Thank you for letting us know. We'll find another therapist for this client. 🙏`
     );
 
-    // Log
     await supabaseAdmin.from('conversations').insert({
       therapist_id: therapist.id,
       channel: 'whatsapp',
       direction: 'outbound',
       from_number: AI_WA_NUMBER,
       to_number: therapist.whatsapp_number,
-      message_body: 'Therapist declined, looking for alternatives',
+      message_body: `Therapist declined for ${clientName} (${refId})`,
       ai_generated: true,
       ai_intent: 'therapist_declined',
     });
@@ -1050,7 +1171,7 @@ async function handleTherapistMessage(
     // Notify client and try next therapist
     await sendAndLog(
       lead as Lead,
-      `*${therapist.full_name}* is not available at the moment. Let me find another great therapist for you! \u{1F64F}`,
+      `*${therapist.full_name}* is not available at the moment. Let me find another great therapist for you! 🙏`,
       'therapist_declined_notify'
     );
 
@@ -1058,15 +1179,103 @@ async function handleTherapistMessage(
     return;
   }
 
-  // Unrecognized therapist message — re-send buttons
+  // ── Unrecognized: show client details + re-send buttons ──
   await sendInteractiveButtons(
     therapist.whatsapp_number!,
-    `Thanks for your message! Could you please confirm \u{2014} are you available for this client?`,
+    `You have a pending booking request:\n\n` +
+    `🆔 ${refId}\n` +
+    `👤 Client: ${clientName}\n` +
+    `📋 Looking for: ${clientTherapyType} therapy\n` +
+    `💭 Concern: ${clientConcerns}\n\n` +
+    `Are you available for this client?`,
     [
       { id: 'therapist_yes', title: 'Yes, available' },
       { id: 'therapist_no', title: 'Not available' },
     ]
   );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Auto-send payment link when therapist requests it
+// ─────────────────────────────────────────────────────────────
+
+async function autoSendPaymentForTherapist(
+  therapist: Therapist,
+  clientLead: Lead,
+  session: { id: string; lead_id: string; context_json: Record<string, unknown>; payment_link: string | null; stripe_link_sent: boolean }
+): Promise<void> {
+  const refId = clientRefId(clientLead.id);
+  const clientName = clientLead.full_name ?? 'Client';
+
+  // Check if payment link already sent
+  if (session.stripe_link_sent && session.payment_link) {
+    await sendTextMessage(
+      therapist.whatsapp_number!,
+      `✅ Payment link was already sent to *${clientName}* (${refId}):\n\n💳 ${session.payment_link}\n\nThey should have received it on WhatsApp. 🙏`
+    );
+    return;
+  }
+
+  // Find the appointment for this session
+  const appointmentId = session.context_json?.appointment_id as string | undefined;
+  if (!appointmentId) {
+    await sendTextMessage(
+      therapist.whatsapp_number!,
+      `I couldn't find the booking details to generate a payment link. Let me connect you with support. Please type *SUPPORT*. 🙏`
+    );
+    return;
+  }
+
+  try {
+    const paymentUrl = await createSessionPaymentLink(clientLead.id, therapist.id, appointmentId);
+    const rateUsd = (therapist.session_rate_cents / 100).toFixed(0);
+
+    // Send payment link to client
+    await sendAndLog(
+      clientLead,
+      `💳 Here's your payment link for your session with *${therapist.full_name}* ($${rateUsd}):\n\n` +
+      `${paymentUrl}\n\n` +
+      `🔒 Secured by Stripe\n` +
+      `✅ Once payment is done, please share the confirmation with your therapist.`,
+      'payment_link_therapist_requested'
+    );
+
+    // Update session
+    await supabaseAdmin
+      .from('ai_agent_sessions')
+      .update({ payment_link: paymentUrl, stripe_link_sent: true })
+      .eq('id', session.id);
+
+    // Confirm to therapist
+    await sendTextMessage(
+      therapist.whatsapp_number!,
+      `✅ Payment link ($${rateUsd}) sent to *${clientName}* (${refId}) on WhatsApp! 🙏`
+    );
+
+    // Notify support
+    await sendTextMessage(
+      SUPPORT_WA_NUMBER,
+      `💳 *[PAYMENT LINK SENT]*\n\n` +
+      `🆔 ${refId}\n` +
+      `👤 Client: ${clientName}\n` +
+      `👩‍⚕️ Therapist: ${therapist.full_name}\n` +
+      `💰 Amount: $${rateUsd}\n` +
+      `💳 Link: ${paymentUrl}\n\n` +
+      `Requested by therapist.`
+    );
+
+    logger.info('Payment link sent (therapist request)', {
+      leadId: clientLead.id,
+      refId,
+      therapistId: therapist.id,
+    });
+  } catch (err) {
+    logger.error('autoSendPaymentForTherapist failed', { error: (err as Error).message });
+    await sendTextMessage(
+      therapist.whatsapp_number!,
+      `I'm having trouble generating the payment link. Our support team will help — please type *SUPPORT*. 🙏`
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
