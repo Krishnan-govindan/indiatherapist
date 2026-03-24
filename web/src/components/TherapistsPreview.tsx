@@ -27,11 +27,11 @@ export default async function TherapistsPreview() {
             className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            Meet some of our therapists
+            Meet Our Top Indian Therapists
           </h2>
           <p className="text-gray-500 text-lg max-w-xl mx-auto">
-            All licensed, experienced, and culturally attuned to the NRI
-            experience.
+            10–22 years of clinical experience. Licensed, culturally tailored,
+            and dedicated to the NRI community.
           </p>
         </div>
 

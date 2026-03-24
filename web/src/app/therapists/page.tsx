@@ -546,11 +546,11 @@ export default function TherapistsPage() {
             className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            Find Your Indian Therapist
+            Find Your Perfect Indian Therapist Online
           </h1>
           <p className="text-gray-500 text-lg max-w-2xl">
-            Filter by language, specialty, and therapy type to find your
-            perfect match
+            Connecting NRIs to top Indian therapists. Culturally tailored, affordable,
+            and available in 12 languages across all time zones.
           </p>
         </div>
       </div>

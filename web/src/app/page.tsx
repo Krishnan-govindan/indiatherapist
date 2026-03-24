@@ -55,15 +55,15 @@ function Hero() {
             className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            Therapy that feels{" "}
-            <span className="text-[#7B5FB8] italic">like home</span>
+            #1 Online Indian Therapy Platform{" "}
+            <span className="text-[#7B5FB8] italic">for NRIs</span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mb-10 max-w-2xl mx-auto">
-            Connect with experienced Indian therapists who understand visa
-            anxiety, family pressure, and the loneliness of living between two
-            worlds — in your language, on your schedule.
+            Connecting NRIs to top Indian therapists who truly understand your
+            culture, your struggles, and your language. Culturally tailored
+            therapy — affordable, confidential, and available across every time zone.
           </p>
 
           {/* CTAs */}
@@ -151,22 +151,22 @@ const painPoints = [
   {
     emoji: "😔",
     title: "Loneliness abroad",
-    body: "You've built a life overseas, but Sunday evenings still feel empty.",
+    body: "Whether you moved for work or as a trailing spouse, the isolation of starting over in a new country without family support takes a real toll.",
   },
   {
     emoji: "😰",
     title: "Visa & career anxiety",
-    body: "H-1B renewals. Layoff waves. The constant question: what if I have to go back?",
+    body: "Constant layoffs, H-1B uncertainty, work permit stress — the fear of losing everything you built abroad keeps you up at night.",
   },
   {
     emoji: "📞",
     title: "Family pressure from 10,000 miles",
-    body: "Marriage expectations. Career comparisons. The guilt of not being there.",
+    body: "Marriage expectations, parenting across cultures, eldercare guilt — your family loves you but the pressure never stops.",
   },
   {
     emoji: "🪞",
-    title: "Cultural identity in crisis",
-    body: "Too Indian for your colleagues, too Western for family back home.",
+    title: "Cultural identity & LGBTQIA+",
+    body: "Navigating bicultural identity, coming out in a traditional family, or feeling too Indian for your colleagues and too Western for family back home.",
   },
 ];
 
@@ -244,6 +244,79 @@ const steps = [
 ];
 
 // ─────────────────────────────────────────────────────────────
+// Services — What We Help With
+// ─────────────────────────────────────────────────────────────
+
+function Services() {
+  return (
+    <section className="bg-white py-20 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-2xl text-center mb-14">
+          <h2
+            className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4"
+            style={{ fontFamily: "'Outfit', sans-serif" }}
+          >
+            What We Help With
+          </h2>
+          <p className="text-gray-500 text-lg leading-relaxed">
+            Specialized support for the unique mental health challenges NRIs face every day.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {services.map((service) => (
+            <Link
+              key={service.title}
+              href="/therapists"
+              className="group rounded-2xl border border-gray-100 bg-[#F8F5FF] p-8 hover:border-[#7B5FB8]/30 hover:shadow-md transition-all"
+            >
+              <div className="mb-4 text-4xl">{service.icon}</div>
+              <h3 className="mb-2 text-lg font-semibold text-gray-900 group-hover:text-[#7B5FB8] transition-colors">
+                {service.title}
+              </h3>
+              <p className="text-gray-500 leading-relaxed text-sm">{service.body}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const services = [
+  {
+    icon: "💙",
+    title: "Depression & Stress",
+    body: "Coping with isolation, adjustment struggles, and the mental load of building a life far from home.",
+  },
+  {
+    icon: "💑",
+    title: "Marriage & Couples Counseling",
+    body: "Long-distance relationships, cultural expectations, communication breakdowns, and rebuilding trust.",
+  },
+  {
+    icon: "🏠",
+    title: "Loneliness & Homesickness",
+    body: "For trailing spouses, new immigrants, and anyone who feels invisible in a country that isn't quite home yet.",
+  },
+  {
+    icon: "💼",
+    title: "Work Stress & Career Anxiety",
+    body: "Visa-dependent employment, constant layoffs, burnout, and the pressure of justifying your life abroad.",
+  },
+  {
+    icon: "💍",
+    title: "Premarital Counseling",
+    body: "Navigating cross-cultural relationships, family approval, and building a strong foundation before marriage.",
+  },
+  {
+    icon: "🌈",
+    title: "LGBTQIA+ Support",
+    body: "Culturally sensitive identity exploration, coming out in traditional families, and finding acceptance on your own terms.",
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
 // Trust Signals
 // ─────────────────────────────────────────────────────────────
 
@@ -284,13 +357,13 @@ function TrustSignals() {
 const trustSignals = [
   {
     icon: "🗣️",
-    title: "Your language, your culture",
-    body: "Sessions in Hindi, Tamil, Telugu, Gujarati, Marathi, Kannada, Malayalam, Punjabi, Bengali, Urdu, and English.",
+    title: "Culturally tailored therapy",
+    body: "Top Indian therapists who speak your language — Hindi, Tamil, Telugu, Gujarati, Marathi, Kannada, Malayalam, Punjabi, and more.",
   },
   {
     icon: "💰",
-    title: "60% less than local therapy",
-    body: "$39–$141/session vs. $150–$300 in the US or UK. Same quality, radically better value.",
+    title: "Affordable therapy for NRIs",
+    body: "$39–$141/session vs. $150–$300 in the US or UK. Quality therapy that doesn't break the bank.",
   },
   {
     icon: "✅",
@@ -298,19 +371,19 @@ const trustSignals = [
     body: "Not the right fit? Full refund, no questions asked. We want this to work for you.",
   },
   {
-    icon: "🧠",
-    title: "NRI-specific specializations",
-    body: "Immigration stress, cross-cultural identity, long-distance family relationships — your therapist has been there.",
+    icon: "🌐",
+    title: "Online counseling from anywhere",
+    body: "Attend sessions from wherever you are in the world. No commute, no waiting rooms — just you and your therapist.",
   },
   {
     icon: "🎓",
     title: "10–22 years clinical experience",
-    body: "All therapists are licensed professionals with deep experience. No freshers, no exceptions.",
+    body: "Licensed professionals like Aekta (22 yrs), Suvarna (14 yrs), and Niyatii (13 yrs). No freshers, no exceptions.",
   },
   {
-    icon: "🌍",
-    title: "Flexible across all time zones",
-    body: "From San Francisco to Singapore, we schedule around your life — mornings, evenings, weekends.",
+    icon: "🤝",
+    title: "Exceptional service, every step",
+    body: "From your first WhatsApp message to your first session in under 24 hours. We coordinate everything so you don't have to.",
   },
 ];
 
@@ -365,22 +438,22 @@ function Testimonials() {
 
 const testimonials = [
   {
-    name: "Ananya",
-    location: "California, USA",
+    name: "KomalPreet",
+    location: "Seattle, USA",
     quote:
-      "My therapist understood the pressure of being the eldest daughter in a Gujarati family without me having to explain joint family dynamics. It felt like talking to someone who just gets it.",
+      "Managing a full-time job and personal life with kids was very stressful being an NRI without any family support. India Therapist helped me improve my self-esteem drastically and change my lifestyle. Therapist Gunjan was amazing and supportive.",
   },
   {
-    name: "Karthik",
-    location: "London, UK",
+    name: "Rakshita",
+    location: "Vancouver, Canada",
     quote:
-      "I was skeptical about online therapy, but my first session changed everything. My therapist addressed my H-1B anxiety in a way no Western counsellor ever could have.",
+      "India Therapist helped me overcome loneliness abroad as a housewife, speak up confidently, and voice my opinions whenever needed. I was able to let go of the thoughts that were holding me back.",
   },
   {
-    name: "Meera",
-    location: "Singapore",
+    name: "Krishna",
+    location: "San Francisco, USA",
     quote:
-      "The WhatsApp coordination was seamless — no scheduling back-and-forth. I was in a session within 18 hours of filling out the form. The whole experience felt human.",
+      "India Therapist helped me handle the stress and overcome depression during constant layoffs, visa issues, and uncertainty about my life as an NRI. I highly recommend them!",
   },
 ];
 
@@ -434,36 +507,36 @@ function FAQ() {
 
 const faqs = [
   {
-    q: "How is India Therapist different from regular online therapy?",
-    a: "Our therapists are all Indian, culturally aware, and specialize in NRI-specific issues like immigration stress, family dynamics across borders, and cultural identity. You won't need to explain what Diwali is or why your parents' opinion matters so much.",
+    q: "What issues can therapy help me with?",
+    a: "Our therapists specialize in depression, stress, anxiety, loneliness, marriage and couples counseling, work stress, premarital counseling, LGBTQIA+ support, relationship challenges, trauma, grief, self-esteem issues, and personal growth. If you're an NRI dealing with any of these, we're here for you.",
   },
   {
-    q: "What languages are sessions available in?",
-    a: "We offer sessions in Hindi, Tamil, Telugu, Gujarati, Marathi, Kannada, Malayalam, Punjabi, Bengali, Urdu, and English. You can switch languages mid-session if needed.",
+    q: "How is India Therapist different from regular online therapy?",
+    a: "We are the #1 culturally tailored therapy platform built exclusively for NRIs. Our therapists are all Indian, understand your cultural context — from family pressure to visa anxiety — and speak your language. You won't need to explain what Diwali is or why your parents' opinion matters so much.",
+  },
+  {
+    q: "How do I know if I need therapy?",
+    a: "If you're feeling persistently stressed, lonely, anxious, or struggling with relationships, work, or identity — therapy can help. You don't need to be in crisis to benefit. Many NRIs reach out simply because they want someone who understands their world.",
+  },
+  {
+    q: "What should I expect during a therapy session?",
+    a: "Your first session is a safe, confidential space to share what's on your mind. Your therapist will listen, understand your concerns, and work with you on a personalized plan. Sessions are 60 minutes via secure video call — attend from anywhere in the world.",
+  },
+  {
+    q: "How long does therapy typically last?",
+    a: "It varies by person and concern. Some clients find clarity in 4-6 sessions, while others prefer ongoing support. Your therapist will work with you to set goals and decide what feels right. There are no long-term commitments required.",
   },
   {
     q: "How much does a session cost?",
-    a: "Sessions range from $39 to $141 per 60-minute session, depending on the therapist's experience and specialization. That's 60% less than typical Western therapy rates.",
+    a: "Sessions range from $39 to $141 per 60-minute session, depending on the therapist's experience and specialization. That's up to 60% less than typical therapy rates in the US or UK — affordable, culturally tailored therapy.",
   },
   {
-    q: "What if I don't like my therapist?",
-    a: "Your first session is risk-free. If it's not the right fit, you get a full refund — no questions asked. We can also help you switch to another therapist at no extra cost.",
+    q: "What if I don't feel a connection with my therapist?",
+    a: "Your first session is risk-free. If it's not the right fit, you get a full refund — no questions asked. We can also help you switch to another therapist at no extra cost. The right connection matters.",
   },
   {
-    q: "How quickly can I get an appointment?",
-    a: "Most clients are matched with a therapist and have their first session within 24 hours. We work across all time zones, so scheduling is flexible.",
-  },
-  {
-    q: "Is my information confidential?",
-    a: "Absolutely. All sessions are private and encrypted. We follow strict confidentiality protocols. Your employer, family, or anyone else will never know you're in therapy unless you choose to tell them.",
-  },
-  {
-    q: "Do you accept insurance?",
-    a: "We don't currently bill insurance directly. However, we provide detailed invoices that many clients successfully submit to their insurance for out-of-network reimbursement.",
-  },
-  {
-    q: "What issues can India Therapist help with?",
-    a: "Our therapists specialize in anxiety, depression, relationship issues, family conflicts, career stress, immigration-related concerns, cultural identity, grief, and more. If you're unsure, reach out and we'll guide you.",
+    q: "How can therapy benefit my personal development?",
+    a: "Beyond addressing specific concerns, therapy helps you build self-awareness, improve communication, manage stress, and develop healthier relationships. Many NRIs use therapy to navigate cultural identity, career transitions, and family dynamics more effectively.",
   },
 ];
 
@@ -554,6 +627,7 @@ export default function Home() {
         <Hero />
         <PainPoints />
         <HowItWorks />
+        <Services />
         <TrustSignals />
         <TherapistsPreview />
         <Testimonials />

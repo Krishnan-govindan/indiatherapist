@@ -14,15 +14,20 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.c
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: "India Therapist — Therapy for NRIs, in your language",
+    default: "India Therapist — #1 Online Indian Therapy Platform for NRIs",
     template: "%s | India Therapist",
   },
   description:
-    "Connect with experienced Indian therapists who understand visa anxiety, family pressure, and the loneliness of living between two worlds. Available in 11 languages across all time zones.",
+    "Connecting NRIs to top Indian therapists who understand your culture. Affordable online therapy in Hindi, Tamil, Telugu & 9 more languages. From $39/session across all time zones.",
   keywords: [
     "Indian therapist online", "NRI therapy", "therapy for Indians abroad",
     "Hindi therapist", "Tamil therapist", "Indian psychologist online",
     "therapy for NRI", "online therapy India", "mental health NRI",
+    "Indian therapy for depression", "NRI couples therapy",
+    "online therapy for loneliness", "LGBTQIA therapy Indian",
+    "premarital counseling Indian", "culturally sensitive therapy",
+    "affordable therapy for NRIs", "NRI marriage counseling",
+    "work stress therapy NRI", "Indian therapist for anxiety",
   ],
   authors: [{ name: "India Therapist", url: APP_URL }],
   creator: "India Therapist",
@@ -33,9 +38,9 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
   openGraph: {
-    title: "India Therapist — Therapy for NRIs, in your language",
+    title: "India Therapist — #1 Online Indian Therapy Platform for NRIs",
     description:
-      "Connect with experienced Indian therapists who understand visa anxiety, family pressure, and the loneliness of living between two worlds.",
+      "Connecting NRIs to top Indian therapists who understand your culture. Affordable online therapy in 12 languages, from $39/session.",
     url: APP_URL,
     siteName: "India Therapist",
     locale: "en_US",
@@ -45,15 +50,15 @@ export const metadata: Metadata = {
         url: `${APP_URL}/og-default.png`,
         width: 1200,
         height: 630,
-        alt: "India Therapist — Therapy for NRIs",
+        alt: "India Therapist — #1 Online Indian Therapy Platform for NRIs",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "India Therapist — Therapy for NRIs, in your language",
+    title: "India Therapist — #1 Online Indian Therapy Platform for NRIs",
     description:
-      "Online therapy with Indian therapists who understand your world. In your language, on your schedule.",
+      "Top Indian therapists for NRIs. Culturally tailored, affordable online therapy in your language, on your schedule.",
     images: [`${APP_URL}/og-default.png`],
     creator: "@indiatherapist",
     site: "@indiatherapist",
