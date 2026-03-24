@@ -12,14 +12,13 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 bg-[#F8F5FF]/95 backdrop-blur-sm border-b border-[#7B5FB8]/10">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <LotusIcon className="h-8 w-8 text-[#7B5FB8] transition-transform group-hover:scale-110" />
-          <span
-            className="text-xl font-semibold text-[#7B5FB8] tracking-tight"
-            style={{ fontFamily: "'Outfit', sans-serif" }}
-          >
-            India Therapist
-          </span>
+        <Link href="/" className="flex items-center gap-2 group">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/m9jCzEyKqM4xlMWTjcgS/media/8aac4e2d-226e-42af-9975-4894f031470e.png"
+            alt="India Therapist"
+            className="h-10 w-auto object-contain transition-opacity group-hover:opacity-80"
+          />
         </Link>
 
         {/* Desktop nav */}
@@ -132,24 +131,6 @@ const navLinks = [
   { label: "About", href: "/about" },
   { label: "Blog", href: "https://blogs.indiatherapist.com", external: true },
 ];
-
-function LotusIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M16 28C16 28 6 22 6 14C6 14 10 16 12 19C12 19 12 12 16 8C20 12 20 19 20 19C22 16 26 14 26 14C26 22 16 28 16 28Z"
-        fill="currentColor"
-        opacity="0.9"
-      />
-      <path
-        d="M16 28C16 28 10 24 8 18C8 18 12 18 14 22C14 22 14 15 16 12C18 15 18 22 18 22C20 18 24 18 24 18C22 24 16 28 16 28Z"
-        fill="currentColor"
-        opacity="0.5"
-      />
-      <circle cx="16" cy="26" r="2" fill="currentColor" opacity="0.6" />
-    </svg>
-  );
-}
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (

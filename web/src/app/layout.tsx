@@ -11,6 +11,9 @@ const outfit = Outfit({
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.com";
 
+const LOGO_URL =
+  "https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/m9jCzEyKqM4xlMWTjcgS/media/8aac4e2d-226e-42af-9975-4894f031470e.png";
+
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
@@ -29,6 +32,11 @@ export const metadata: Metadata = {
     "affordable therapy for NRIs", "NRI marriage counseling",
     "work stress therapy NRI", "Indian therapist for anxiety",
   ],
+  icons: {
+    icon: LOGO_URL,
+    shortcut: LOGO_URL,
+    apple: LOGO_URL,
+  },
   authors: [{ name: "India Therapist", url: APP_URL }],
   creator: "India Therapist",
   publisher: "India Therapist",
@@ -47,7 +55,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: `${APP_URL}/og-default.png`,
+        url: LOGO_URL,
         width: 1200,
         height: 630,
         alt: "India Therapist — #1 Online Indian Therapy Platform for NRIs",
@@ -59,7 +67,7 @@ export const metadata: Metadata = {
     title: "India Therapist — #1 Online Indian Therapy Platform for NRIs",
     description:
       "Top Indian therapists for NRIs. Culturally tailored, affordable online therapy in your language, on your schedule.",
-    images: [`${APP_URL}/og-default.png`],
+    images: [LOGO_URL],
     creator: "@indiatherapist",
     site: "@indiatherapist",
   },
