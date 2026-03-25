@@ -4,14 +4,14 @@ import JsonLd from "@/components/SEO/JsonLd";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.com";
 
 export const metadata: Metadata = {
-  title: "Find Indian Therapists for NRIs",
+  title: "Find an Indian Therapist Online for NRIs | 26+ Therapists | India Therapist",
   description:
-    "Browse licensed Indian therapists specializing in NRI mental health. Filter by language (Hindi, Tamil, Telugu…), specialty, and timezone. Online sessions from $97.",
+    "Browse 26+ licensed Indian therapists specializing in NRI mental health. Filter by language (Hindi, Tamil, Telugu…), specialty, and timezone. Online sessions from $39.",
   alternates: { canonical: `${APP_URL}/therapists` },
   openGraph: {
     title: "Find Your Indian Therapist | India Therapist",
     description:
-      "Licensed Indian therapists for NRIs. Hindi, Tamil, Telugu and more. Online sessions from $97.",
+      "Licensed Indian therapists for NRIs. Hindi, Tamil, Telugu and more. Online sessions from $39.",
     url: `${APP_URL}/therapists`,
     type: "website",
   },

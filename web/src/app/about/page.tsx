@@ -1,16 +1,46 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import JsonLd from "@/components/SEO/JsonLd";
 import type { Metadata } from "next";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.com";
+
 export const metadata: Metadata = {
-  title: "About Us — India Therapist",
+  title: "About India Therapist — The Only Online Therapy Platform for NRIs",
   description:
-    "India Therapist is the only dedicated online therapy platform for NRIs worldwide. Learn about our mission, our therapists, and why we exist.",
+    "India Therapist was founded to solve one problem: NRIs struggling to find therapists who understand their culture. Learn about our mission, therapists, and approach.",
+  alternates: { canonical: `${APP_URL}/about` },
+};
+
+const aboutPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "@id": `${APP_URL}/about`,
+  name: "About India Therapist — The Only Online Therapy Platform for NRIs",
+  description:
+    "India Therapist is an online therapy platform exclusively designed for Non-Resident Indians (NRIs). Founded to address the gap in culturally sensitive mental health support for the global Indian diaspora, India Therapist connects Indians living in Australia, USA, UK, Canada, Singapore, UAE, and 14+ other countries with experienced India-based therapists. Sessions are available in Hindi, Tamil, Telugu, Gujarati, Marathi, Kannada, Malayalam, Punjabi, Bengali, Urdu, and English.",
+  url: `${APP_URL}/about`,
+  mainEntity: {
+    "@type": ["Organization", "MedicalBusiness"],
+    "@id": `${APP_URL}/#organization`,
+    name: "India Therapist",
+    url: APP_URL,
+    logo: `${APP_URL}/logo.png`,
+    foundingDate: "2022",
+    description:
+      "India Therapist is the only therapy platform dedicated exclusively to NRIs. Unlike general therapy platforms, India Therapist therapists specialise in NRI-specific challenges: H-1B visa anxiety, bicultural identity conflicts, family pressure from India, immigrant loneliness, and cultural adjustment. All therapists have 5–22 years of clinical experience.",
+    numberOfEmployees: { "@type": "QuantitativeValue", minValue: 20, unitText: "therapists" },
+    areaServed: ["AU", "US", "GB", "CA", "NZ", "SG", "AE", "IN", "NL", "DE", "FR", "MY", "SE", "NO", "CH"],
+    availableLanguage: ["Hindi", "Tamil", "Telugu", "Gujarati", "Marathi", "Kannada", "Malayalam", "Punjabi", "Bengali", "Urdu", "English"],
+    priceRange: "$39–$141",
+    sameAs: ["https://www.facebook.com/indiatherapist", "https://blogs.indiatherapist.com"],
+  },
 };
 
 export default function AboutPage() {
   return (
     <>
+      <JsonLd schema={aboutPageSchema} />
       <Navbar />
       <main>
         {/* Hero */}

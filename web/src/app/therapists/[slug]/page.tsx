@@ -3,6 +3,7 @@ import Link from "next/link";
 import BookingCard from "./BookingCard";
 import JsonLd from "@/components/SEO/JsonLd";
 import { getTherapistsBySlugMap, type TherapistData } from "@/data/therapists";
+import { getTherapistSchema, getBreadcrumbSchema } from "@/lib/schemas";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -198,38 +199,20 @@ export default async function TherapistProfilePage({
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.com";
 
   // JSON-LD: Person + Physician schema
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": ["Person", "Physician"],
-    name: therapist.full_name,
-    jobTitle: "Licensed Therapist",
-    description: therapist.bio ?? undefined,
-    knowsLanguage: therapist.languages,
-    image: therapist.photo_url ?? undefined,
-    url: `${appUrl}/therapists/${therapist.slug}`,
-    worksFor: {
-      "@type": "Organization",
-      name: "India Therapist",
-      url: appUrl,
-    },
-    hasCredential: therapist.credentials
-      ? { "@type": "EducationalOccupationalCredential", credentialCategory: therapist.credentials }
-      : undefined,
-    alumniOf: therapist.education
-      ? { "@type": "EducationalOrganization", name: therapist.education }
-      : undefined,
-    offers: {
-      "@type": "Offer",
-      price: (therapist.session_rate_cents / 100).toString(),
-      priceCurrency: "USD",
-      description: "60-minute online therapy session",
-    },
-  };
+  const jsonLd = getTherapistSchema(therapist);
+
+  // JSON-LD: Breadcrumb schema
+  const breadcrumbLd = getBreadcrumbSchema([
+    { name: "Home", url: appUrl },
+    { name: "Therapists", url: `${appUrl}/therapists` },
+    { name: therapist.full_name, url: `${appUrl}/therapists/${therapist.slug}` },
+  ]);
 
   return (
     <>
       {/* JSON-LD */}
       <JsonLd schema={jsonLd} />
+      <JsonLd schema={breadcrumbLd} />
 
       <main className="min-h-screen bg-[#F8F5FF]">
         {/* ── Breadcrumb ───────────────────────────────────── */}

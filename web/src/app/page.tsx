@@ -1,29 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import TherapistsPreview from "@/components/TherapistsPreview";
 import JsonLd from "@/components/SEO/JsonLd";
+import { getOrganizationSchema, getWebSiteSchema, getFaqSchema } from "@/lib/schemas";
 
 const WA_LINK = "https://wa.me/18568782862"; // Meta API WhatsApp: +1 (856) 878-2862
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.com";
-
-const ORG_SCHEMA = {
-  "@context": "https://schema.org",
-  "@type": ["Organization", "MedicalBusiness"],
-  name: "India Therapist",
-  url: APP_URL,
-  logo: `${APP_URL}/logo.png`,
-  description: "India's only dedicated online therapy platform for NRIs worldwide",
-  areaServed: ["AU", "US", "GB", "CA", "NZ", "SG", "AE", "IN"],
-  availableLanguage: ["en", "hi", "ta", "te", "gu", "mr", "kn", "ml", "pa"],
-  priceRange: "$39–$141",
-  sameAs: ["https://www.facebook.com/indiatherapist"],
-  contactPoint: {
-    "@type": "ContactPoint",
-    contactType: "customer support",
-    availableLanguage: ["English", "Hindi"],
-  },
-};
 
 // ─────────────────────────────────────────────────────────────
 // Hero
@@ -32,6 +14,18 @@ const ORG_SCHEMA = {
 function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-[#F8F5FF] via-[#F0EBFF] to-[#E0D5FF] py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
+      {/* Background hero image with overlay */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/hero.jpg"
+          alt=""
+          fill
+          className="object-cover object-center opacity-10"
+          priority
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F8F5FF]/95 via-[#F0EBFF]/90 to-[#E0D5FF]/85" />
+      </div>
       {/* Background blobs */}
       <div
         aria-hidden
@@ -42,7 +36,7 @@ function Hero() {
         className="absolute -bottom-24 -left-24 h-[400px] w-[400px] rounded-full bg-[#A78BDE]/10 blur-3xl"
       />
 
-      <div className="relative mx-auto max-w-7xl">
+      <div className="relative z-10 mx-auto max-w-7xl">
         <div className="mx-auto max-w-3xl text-center">
           {/* Badge */}
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#7B5FB8]/20 bg-[#7B5FB8]/8 px-4 py-1.5 text-sm font-medium text-[#7B5FB8]">
@@ -132,13 +126,26 @@ function PainPoints() {
           {painPoints.map((point) => (
             <div
               key={point.title}
-              className="rounded-2xl border border-gray-100 bg-[#F8F5FF] p-8 hover:border-[#7B5FB8]/20 hover:shadow-sm transition-all"
+              className="rounded-2xl border border-gray-100 bg-[#F8F5FF] overflow-hidden hover:border-[#7B5FB8]/20 hover:shadow-sm transition-all"
             >
-              <div className="mb-4 text-4xl">{point.emoji}</div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                {point.title}
-              </h3>
-              <p className="text-gray-500 leading-relaxed">{point.body}</p>
+              {point.image && (
+                <div className="relative h-48 w-full">
+                  <Image
+                    src={point.image}
+                    alt={point.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, 50vw"
+                  />
+                </div>
+              )}
+              <div className="p-8">
+                <div className="mb-4 text-4xl">{point.emoji}</div>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                  {point.title}
+                </h3>
+                <p className="text-gray-500 leading-relaxed">{point.body}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -152,21 +159,25 @@ const painPoints = [
     emoji: "😔",
     title: "Loneliness abroad",
     body: "Whether you moved for work or as a trailing spouse, the isolation of starting over in a new country without family support takes a real toll.",
+    image: "/images/pain-loneliness.jpg",
   },
   {
     emoji: "😰",
     title: "Visa & career anxiety",
     body: "Constant layoffs, H-1B uncertainty, work permit stress — the fear of losing everything you built abroad keeps you up at night.",
+    image: "/images/pain-visa.jpg",
   },
   {
     emoji: "📞",
     title: "Family pressure from 10,000 miles",
     body: "Marriage expectations, parenting across cultures, eldercare guilt — your family loves you but the pressure never stops.",
+    image: "/images/pain-family.jpg",
   },
   {
     emoji: "🪞",
     title: "Cultural identity & LGBTQIA+",
     body: "Navigating bicultural identity, coming out in a traditional family, or feeling too Indian for your colleagues and too Western for family back home.",
+    image: "/images/pain-identity.jpg",
   },
 ];
 
@@ -268,13 +279,26 @@ function Services() {
             <Link
               key={service.title}
               href="/therapists"
-              className="group rounded-2xl border border-gray-100 bg-[#F8F5FF] p-8 hover:border-[#7B5FB8]/30 hover:shadow-md transition-all"
+              className="group rounded-2xl border border-gray-100 bg-[#F8F5FF] overflow-hidden hover:border-[#7B5FB8]/30 hover:shadow-md transition-all"
             >
-              <div className="mb-4 text-4xl">{service.icon}</div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900 group-hover:text-[#7B5FB8] transition-colors">
-                {service.title}
-              </h3>
-              <p className="text-gray-500 leading-relaxed text-sm">{service.body}</p>
+              {service.image && (
+                <div className="relative h-44 w-full">
+                  <Image
+                    src={service.image}
+                    alt={service.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
+                </div>
+              )}
+              <div className="p-6">
+                <div className="mb-3 text-3xl">{service.icon}</div>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900 group-hover:text-[#7B5FB8] transition-colors">
+                  {service.title}
+                </h3>
+                <p className="text-gray-500 leading-relaxed text-sm">{service.body}</p>
+              </div>
             </Link>
           ))}
         </div>
@@ -288,31 +312,37 @@ const services = [
     icon: "💙",
     title: "Depression & Stress",
     body: "Coping with isolation, adjustment struggles, and the mental load of building a life far from home.",
+    image: "/images/svc-depression.jpg",
   },
   {
     icon: "💑",
     title: "Marriage & Couples Counseling",
     body: "Long-distance relationships, cultural expectations, communication breakdowns, and rebuilding trust.",
+    image: "/images/svc-couples.jpg",
   },
   {
     icon: "🏠",
     title: "Loneliness & Homesickness",
     body: "For trailing spouses, new immigrants, and anyone who feels invisible in a country that isn't quite home yet.",
+    image: "/images/svc-loneliness.jpg",
   },
   {
     icon: "💼",
     title: "Work Stress & Career Anxiety",
     body: "Visa-dependent employment, constant layoffs, burnout, and the pressure of justifying your life abroad.",
+    image: "/images/svc-workstress.jpg",
   },
   {
     icon: "💍",
     title: "Premarital Counseling",
     body: "Navigating cross-cultural relationships, family approval, and building a strong foundation before marriage.",
+    image: "/images/svc-premarital.jpg",
   },
   {
     icon: "🌈",
     title: "LGBTQIA+ Support",
     body: "Culturally sensitive identity exploration, coming out in traditional families, and finding acceptance on your own terms.",
+    image: "/images/svc-lgbtq.jpg",
   },
 ];
 
@@ -621,7 +651,9 @@ function Footer() {
 export default function Home() {
   return (
     <>
-      <JsonLd schema={ORG_SCHEMA} />
+      <JsonLd schema={getOrganizationSchema()} />
+      <JsonLd schema={getWebSiteSchema()} />
+      <JsonLd schema={getFaqSchema(faqs)} />
       <Navbar />
       <main>
         <Hero />

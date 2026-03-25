@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const WA_OWNER = "18568782862"; // Meta API WhatsApp: +1 (856) 878-2862
 
@@ -13,10 +14,12 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/logo.png"
-            alt="India Therapist"
+            alt="India Therapist — Online Therapy for NRIs"
+            width={160}
+            height={64}
+            priority
             className="h-16 w-auto object-contain transition-opacity group-hover:opacity-80"
           />
         </Link>
