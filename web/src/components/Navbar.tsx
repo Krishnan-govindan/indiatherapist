@@ -17,7 +17,7 @@ export default function Navbar() {
           <img
             src="/logo.png"
             alt="India Therapist"
-            className="h-10 w-auto object-contain transition-opacity group-hover:opacity-80"
+            className="h-16 w-auto object-contain transition-opacity group-hover:opacity-80"
           />
         </Link>
 
