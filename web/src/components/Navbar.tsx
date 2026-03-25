@@ -15,7 +15,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2 group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/m9jCzEyKqM4xlMWTjcgS/media/8aac4e2d-226e-42af-9975-4894f031470e.png"
+            src="https://assets.cdn.filesafe.space/m9jCzEyKqM4xlMWTjcgS/media/6776a016d4ebc4cfaac4c053.png"
             alt="India Therapist"
             className="h-10 w-auto object-contain transition-opacity group-hover:opacity-80"
           />

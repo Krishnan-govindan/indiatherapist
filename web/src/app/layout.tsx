@@ -12,7 +12,7 @@ const outfit = Outfit({
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.com";
 
 const LOGO_URL =
-  "https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/m9jCzEyKqM4xlMWTjcgS/media/8aac4e2d-226e-42af-9975-4894f031470e.png";
+  "https://assets.cdn.filesafe.space/m9jCzEyKqM4xlMWTjcgS/media/6776a016d4ebc4cfaac4c053.png";
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
