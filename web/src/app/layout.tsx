@@ -11,8 +11,7 @@ const outfit = Outfit({
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.com";
 
-const LOGO_URL =
-  "https://assets.cdn.filesafe.space/m9jCzEyKqM4xlMWTjcgS/media/6776a016d4ebc4cfaac4c053.png";
+const LOGO_URL = `${APP_URL}/logo.png`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
