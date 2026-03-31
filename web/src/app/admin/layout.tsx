@@ -17,6 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <NavLink href="/admin">Overview</NavLink>
             <NavLink href="/admin/leads">Leads</NavLink>
             <NavLink href="/admin/therapists">Therapists</NavLink>
+            <NavLink href="/admin/blogs">Blogs</NavLink>
             <Link
               href="/admin/whatsapp"
               className="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-[#B0A8C0] hover:bg-[#3E2868] hover:text-white transition-colors"

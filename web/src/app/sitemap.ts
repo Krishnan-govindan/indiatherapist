@@ -4,6 +4,23 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.c
 
 const SEED_SLUGS = ["dr-priya-sharma", "kavitha-rajan", "rahul-deshmukh"];
 
+async function fetchBlogSlugs(): Promise<{ slug: string; published_at: string }[]> {
+  try {
+    const apiUrl = process.env.API_URL ?? "http://localhost:3001";
+    const res = await fetch(`${apiUrl}/api/blogs?limit=1000`, {
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.posts ?? []).map((p: { slug: string; published_at: string }) => ({
+      slug: p.slug,
+      published_at: p.published_at,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 async function fetchTherapistSlugs(): Promise<string[]> {
   try {
     const apiUrl = process.env.API_URL ?? "http://localhost:3001";
@@ -20,7 +37,10 @@ async function fetchTherapistSlugs(): Promise<string[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const slugs = await fetchTherapistSlugs();
+  const [slugs, blogPosts] = await Promise.all([
+    fetchTherapistSlugs(),
+    fetchBlogSlugs(),
+  ]);
   const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -77,5 +97,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...landingPages, ...therapistRoutes];
+  const blogRoutes: MetadataRoute.Sitemap = [
+    {
+      url: `${APP_URL}/blogs`,
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    ...blogPosts.map((post) => ({
+      url: `${APP_URL}/blogs/${post.slug}`,
+      lastModified: new Date(post.published_at),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
+  ];
+
+  return [...staticRoutes, ...landingPages, ...therapistRoutes, ...blogRoutes];
 }

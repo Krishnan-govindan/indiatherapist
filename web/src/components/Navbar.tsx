@@ -26,27 +26,15 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) =>
-            link.external ? (
-              <a
-                key={link.href}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
-              >
-                {link.label}
-              </a>
-            ) : (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
-              >
-                {link.label}
-              </Link>
-            )
-          )}
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-sm font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
         {/* Desktop CTA */}
@@ -81,19 +69,7 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden border-t border-[#7B5FB8]/10 bg-[#F8F5FF] px-4 pb-4 pt-2">
           <div className="flex flex-col gap-3">
-            {navLinks.map((link) =>
-              link.external ? (
-              <a
-                key={link.href}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setOpen(false)}
-                className="py-2 text-base font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
-              >
-                {link.label}
-              </a>
-            ) : (
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -132,7 +108,7 @@ const navLinks = [
   { label: "Find a Therapist", href: "/therapists" },
   { label: "How It Works", href: "/#how-it-works" },
   { label: "About", href: "/about" },
-  { label: "Blog", href: "https://blogs.indiatherapist.com", external: true },
+  { label: "Blog", href: "/blogs" },
 ];
 
 function WhatsAppIcon({ className }: { className?: string }) {

@@ -31,7 +31,6 @@ export function getOrganizationSchema() {
     priceRange: SEO_CONFIG.priceRange,
     sameAs: [
       "https://www.facebook.com/indiatherapist",
-      "https://blogs.indiatherapist.com",
     ],
     contactPoint: {
       "@type": "ContactPoint",
@@ -158,6 +157,46 @@ export function getTherapistSchema(therapist: {
       description: "60-minute online therapy session",
       availability: "https://schema.org/InStock",
       url: `${APP_URL}/book?therapist=${therapist.slug}`,
+    },
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// BlogPosting (Article) — individual blog post
+// ─────────────────────────────────────────────────────────────
+
+export function getBlogPostSchema(post: {
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  featured_image_url: string | null;
+  author_name: string;
+  published_at: string;
+  updated_at: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt ?? undefined,
+    image: post.featured_image_url ?? undefined,
+    datePublished: post.published_at,
+    dateModified: post.updated_at,
+    url: `${APP_URL}/blogs/${post.slug}`,
+    mainEntityOfPage: `${APP_URL}/blogs/${post.slug}`,
+    author: {
+      "@type": "Organization",
+      name: post.author_name,
+      url: APP_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: SEO_CONFIG.siteName,
+      url: APP_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: SEO_CONFIG.ogImage,
+      },
     },
   };
 }
