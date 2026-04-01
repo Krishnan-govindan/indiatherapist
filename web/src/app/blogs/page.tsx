@@ -8,6 +8,9 @@ import { SEO_CONFIG } from "@/lib/seoConfig";
 
 const APP_URL = SEO_CONFIG.siteUrl;
 
+// Always fetch live data — blog posts change frequently
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Blog — NRI Mental Health Insights & Resources",
   description:
@@ -38,7 +41,7 @@ async function fetchPosts(): Promise<BlogPost[]> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
     const res = await fetch(`${apiUrl}/api/blogs?limit=50`, {
-      next: { revalidate: 3600 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const data = await res.json();
