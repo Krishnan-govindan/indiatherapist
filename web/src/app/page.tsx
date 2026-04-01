@@ -330,7 +330,7 @@ const services = [
     icon: "💼",
     title: "Work Stress & Career Anxiety",
     body: "Visa-dependent employment, constant layoffs, burnout, and the pressure of justifying your life abroad.",
-    image: "/images/svc-workstress.jpg",
+    image: "/images/svc-workstress-2.jpg",
   },
   {
     icon: "💍",
