@@ -177,7 +177,7 @@ const painPoints = [
     emoji: "🪞",
     title: "Cultural identity & LGBTQIA+",
     body: "Navigating bicultural identity, coming out in a traditional family, or feeling too Indian for your colleagues and too Western for family back home.",
-    image: "/images/pain-identity.jpg",
+    image: "/images/pain-identity-2.jpg",
   },
 ];
 
