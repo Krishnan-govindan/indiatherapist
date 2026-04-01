@@ -20,11 +20,11 @@ function Hero() {
           src="/images/hero-2.jpg"
           alt=""
           fill
-          className="object-cover object-center opacity-55"
+          className="object-cover object-center opacity-65"
           priority
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#F8F5FF]/70 via-[#F0EBFF]/60 to-[#E0D5FF]/55" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F8F5FF]/60 via-[#F0EBFF]/50 to-[#E0D5FF]/45" />
       </div>
       {/* Background blobs */}
       <div
