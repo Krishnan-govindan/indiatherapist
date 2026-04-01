@@ -17,14 +17,14 @@ function Hero() {
       {/* Background hero image with overlay */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/hero.jpg"
+          src="/images/hero-2.jpg"
           alt=""
           fill
-          className="object-cover object-center opacity-10"
+          className="object-cover object-center opacity-25"
           priority
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#F8F5FF]/95 via-[#F0EBFF]/90 to-[#E0D5FF]/85" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F8F5FF]/90 via-[#F0EBFF]/85 to-[#E0D5FF]/80" />
       </div>
       {/* Background blobs */}
       <div
