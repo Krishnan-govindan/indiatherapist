@@ -342,7 +342,7 @@ const services = [
     icon: "🌈",
     title: "LGBTQIA+ Support",
     body: "Culturally sensitive identity exploration, coming out in traditional families, and finding acceptance on your own terms.",
-    image: "/images/svc-lgbtq.jpg",
+    image: "/images/svc-lgbtq-2.jpg",
   },
 ];
 
