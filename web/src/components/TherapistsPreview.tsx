@@ -24,10 +24,11 @@ export default async function TherapistsPreview() {
         {/* Header */}
         <div className="text-center mb-12">
           <h2
-            className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4"
+            className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            Meet Our Expert Therapists
+            Meet Our{" "}
+            <span className="text-[#7B5FB8]">Expert Therapists</span>
           </h2>
           <p className="text-gray-500 text-lg max-w-xl mx-auto">
             Connect with qualified mental health professionals who understand
@@ -49,10 +50,10 @@ export default async function TherapistsPreview() {
                   <img
                     src={t.photo_url}
                     alt={t.full_name}
-                    className="h-20 w-20 rounded-full object-cover"
+                    className="h-28 w-28 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-20 w-20 rounded-full bg-[#7B5FB8]/10 flex items-center justify-center">
+                  <div className="h-28 w-28 rounded-full bg-[#7B5FB8]/10 flex items-center justify-center">
                     <span className="text-2xl font-semibold text-[#7B5FB8]">
                       {t.full_name
                         .split(" ")

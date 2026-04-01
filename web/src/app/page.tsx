@@ -55,9 +55,11 @@ function Hero() {
 
           {/* Subheadline */}
           <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mb-10 max-w-2xl mx-auto">
-            Connecting NRIs to top Indian therapists who truly understand your
-            culture, your struggles, and your language. Culturally tailored
-            therapy — affordable, confidential, and available across every time zone.
+            Connecting NRIs to{" "}
+            <strong className="text-gray-800 font-semibold">top Indian therapists</strong>{" "}
+            who truly understand your culture, your struggles, and your language.{" "}
+            <strong className="text-[#7B5FB8] font-semibold">Culturally tailored therapy</strong>{" "}
+            — affordable, confidential, and available across every time zone.
           </p>
 
           {/* CTAs */}
@@ -110,15 +112,16 @@ function PainPoints() {
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center mb-14">
           <h2
-            className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4"
+            className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            You don&apos;t have to explain yourself
+            You don&apos;t have to{" "}
+            <span className="text-[#7B5FB8]">explain yourself</span>
           </h2>
           <p className="text-gray-500 text-lg leading-relaxed">
             Western therapists don&apos;t understand why your mother&apos;s
-            phone call can ruin your week. Our therapists grew up in the same
-            culture you did.
+            phone call can ruin your week. Our therapists grew up in the{" "}
+            <strong className="text-gray-700 font-semibold">same culture you did.</strong>
           </p>
         </div>
 
@@ -129,12 +132,12 @@ function PainPoints() {
               className="rounded-2xl border border-gray-100 bg-[#F8F5FF] overflow-hidden hover:border-[#7B5FB8]/20 hover:shadow-sm transition-all"
             >
               {point.image && (
-                <div className="relative h-48 w-full">
+                <div className="relative h-64 w-full">
                   <Image
                     src={point.image}
                     alt={point.title}
                     fill
-                    className="object-cover"
+                    className="object-cover object-top"
                     sizes="(max-width: 640px) 100vw, 50vw"
                   />
                 </div>
@@ -264,13 +267,15 @@ function Services() {
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center mb-14">
           <h2
-            className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4"
+            className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            What We Help With
+            What{" "}
+            <span className="text-[#7B5FB8]">We Help With</span>
           </h2>
           <p className="text-gray-500 text-lg leading-relaxed">
-            Specialized support for the unique mental health challenges NRIs face every day.
+            Specialized support for the unique mental health challenges{" "}
+            <strong className="text-gray-700 font-semibold">NRIs face every day.</strong>
           </p>
         </div>
 
@@ -282,12 +287,12 @@ function Services() {
               className="group rounded-2xl border border-gray-100 bg-[#F8F5FF] overflow-hidden hover:border-[#7B5FB8]/30 hover:shadow-md transition-all"
             >
               {service.image && (
-                <div className="relative h-44 w-full">
+                <div className="relative h-56 w-full">
                   <Image
                     src={service.image}
                     alt={service.title}
                     fill
-                    className="object-cover"
+                    className="object-cover object-top"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 </div>
@@ -356,10 +361,10 @@ function TrustSignals() {
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center mb-14">
           <h2
-            className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4"
+            className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            Why NRIs choose us
+            Why <span className="text-[#7B5FB8]">NRIs</span> choose us
           </h2>
         </div>
 
@@ -370,7 +375,7 @@ function TrustSignals() {
               className="rounded-2xl bg-white border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="mb-4 text-3xl">{signal.icon}</div>
-              <h3 className="mb-1.5 text-base font-semibold text-gray-900">
+              <h3 className="mb-1.5 text-base font-bold text-gray-900">
                 {signal.title}
               </h3>
               <p className="text-sm text-gray-500 leading-relaxed">
@@ -427,13 +432,14 @@ function Testimonials() {
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center mb-14">
           <h2
-            className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4"
+            className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            Stories from the diaspora
+            Stories from{" "}
+            <span className="text-[#7B5FB8]">the diaspora</span>
           </h2>
           <p className="text-gray-500 text-lg">
-            Real experiences from NRIs who found their footing.
+            Real experiences from <strong className="text-gray-700 font-semibold">NRIs who found their footing.</strong>
           </p>
         </div>
 
@@ -497,13 +503,15 @@ function FAQ() {
       <div className="mx-auto max-w-3xl">
         <div className="text-center mb-14">
           <h2
-            className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4"
+            className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            Frequently asked questions
+            Frequently{" "}
+            <span className="text-[#7B5FB8]">asked questions</span>
           </h2>
           <p className="text-gray-500 text-lg">
-            Everything you need to know before your first session.
+            Everything you need to know{" "}
+            <strong className="text-gray-700 font-semibold">before your first session.</strong>
           </p>
         </div>
 

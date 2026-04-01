@@ -116,7 +116,7 @@ function AvatarInitials({ name }: { name: string }) {
     .slice(0, 2)
     .join("");
   return (
-    <div className="h-16 w-16 rounded-full bg-[#7B5FB8]/10 flex items-center justify-center shrink-0">
+    <div className="h-24 w-24 rounded-full bg-[#7B5FB8]/10 flex items-center justify-center shrink-0">
       <span className="text-xl font-semibold text-[#7B5FB8]">{initials}</span>
     </div>
   );
@@ -139,7 +139,7 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
           <img
             src={therapist.photo_url}
             alt={therapist.full_name}
-            className="h-16 w-16 rounded-full object-cover shrink-0"
+            className="h-24 w-24 rounded-full object-cover shrink-0"
           />
         ) : (
           <AvatarInitials name={therapist.full_name} />

@@ -44,9 +44,13 @@ export const metadata: Metadata = {
     "affordable therapy for NRIs",
   ],
   icons: {
-    icon: LOGO_URL,
+    icon: [
+      { url: LOGO_URL, sizes: "32x32" },
+      { url: LOGO_URL, sizes: "192x192" },
+      { url: LOGO_URL, sizes: "512x512" },
+    ],
     shortcut: LOGO_URL,
-    apple: LOGO_URL,
+    apple: [{ url: LOGO_URL, sizes: "180x180" }],
   },
   authors: [{ name: "India Therapist", url: APP_URL }],
   creator: "India Therapist",
