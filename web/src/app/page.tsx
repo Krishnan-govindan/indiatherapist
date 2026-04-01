@@ -336,7 +336,7 @@ const services = [
     icon: "💍",
     title: "Premarital Counseling",
     body: "Navigating cross-cultural relationships, family approval, and building a strong foundation before marriage.",
-    image: "/images/svc-premarital.jpg",
+    image: "/images/svc-premarital-2.jpg",
   },
   {
     icon: "🌈",
