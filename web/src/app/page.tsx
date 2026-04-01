@@ -165,7 +165,7 @@ const painPoints = [
     emoji: "😰",
     title: "Visa & career anxiety",
     body: "Constant layoffs, H-1B uncertainty, work permit stress — the fear of losing everything you built abroad keeps you up at night.",
-    image: "/images/pain-visa.jpg",
+    image: "/images/pain-visa-2.jpg",
   },
   {
     emoji: "📞",
