@@ -550,13 +550,15 @@ export default function TherapistsPage() {
       <div className="bg-white border-b border-gray-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <h1
-            className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3"
+            className="text-4xl sm:text-5xl font-bold text-gray-900 mb-3"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            Find Your Perfect Indian Therapist Online
+            Find Your Perfect{" "}
+            <span className="text-[#7B5FB8]">Indian Therapist</span> Online
           </h1>
           <p className="text-gray-500 text-lg max-w-2xl">
-            Connecting NRIs to top Indian therapists. Culturally tailored, affordable,
+            Connecting NRIs to <strong className="text-gray-800 font-semibold">top Indian therapists.</strong>{" "}
+            <strong className="text-[#7B5FB8] font-semibold">Culturally tailored</strong>, affordable,
             and available in 12 languages across all time zones.
           </p>
         </div>
