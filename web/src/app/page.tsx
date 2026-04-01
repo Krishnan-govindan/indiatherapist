@@ -171,7 +171,7 @@ const painPoints = [
     emoji: "📞",
     title: "Family pressure from 10,000 miles",
     body: "Marriage expectations, parenting across cultures, eldercare guilt — your family loves you but the pressure never stops.",
-    image: "/images/pain-family.jpg",
+    image: "/images/pain-family-2.jpg",
   },
   {
     emoji: "🪞",
