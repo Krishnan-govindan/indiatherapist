@@ -318,7 +318,7 @@ const services = [
     icon: "💑",
     title: "Marriage & Couples Counseling",
     body: "Long-distance relationships, cultural expectations, communication breakdowns, and rebuilding trust.",
-    image: "/images/svc-couples.jpg",
+    image: "/images/svc-couples-2.jpg",
   },
   {
     icon: "🏠",
