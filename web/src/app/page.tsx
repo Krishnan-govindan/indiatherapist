@@ -397,7 +397,7 @@ const trustSignals = [
   {
     icon: "💰",
     title: "Affordable therapy for NRIs",
-    body: "$39–$141/session vs. $150–$300 in the US or UK. Quality therapy that doesn't break the bank.",
+    body: "Professional Indian therapists at a fraction of typical Western rates — quality mental health support that's accessible for every NRI.",
   },
   {
     icon: "✅",

@@ -25,6 +25,11 @@ interface Therapist {
 type SortOption = "best_match" | "experience" | "rate_asc";
 type TierFilter = "all" | "premium" | "elite";
 
+interface TherapistWithMatch extends Therapist {
+  matchScore: number;
+  isMatch: boolean;
+}
+
 // ─────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────
@@ -196,16 +201,16 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
         {therapist.languages.map((lang) => (
           <span
             key={lang}
-            className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600"
+            className="rounded-full bg-[#7B5FB8]/10 border border-[#7B5FB8]/20 px-3 py-1 text-sm font-medium text-[#6B4AA0] hover:bg-[#7B5FB8]/20 transition-colors duration-200 cursor-default animate-pulse-subtle"
           >
-            {lang}
+            🗣️ {lang}
           </span>
         ))}
       </div>
 
       {/* Bio excerpt */}
       {therapist.bio && (
-        <p className="text-base text-gray-500 line-clamp-2 mb-5 flex-1">
+        <p className="text-base text-gray-800 line-clamp-2 mb-5 flex-1">
           {therapist.bio}
         </p>
       )}
@@ -413,10 +418,56 @@ function FilterBar({
 // Main page
 // ─────────────────────────────────────────────────────────────
 
+function scoreTherapist(
+  t: Therapist,
+  search: string,
+  language: string,
+  selectedSpecialties: string[],
+  tier: TierFilter
+): { isMatch: boolean; matchScore: number } {
+  let matchScore = 0;
+  let isMatch = true;
+
+  // Name search
+  if (search.trim()) {
+    const q = search.toLowerCase();
+    if (!t.full_name.toLowerCase().includes(q)) isMatch = false;
+    else matchScore += 3;
+  }
+
+  // Language filter
+  if (language !== "All Languages") {
+    const langMatch = t.languages.some(
+      (l) => l.toLowerCase() === language.toLowerCase()
+    );
+    if (!langMatch) isMatch = false;
+    else matchScore += 2;
+  }
+
+  // Specialty filter
+  if (selectedSpecialties.length > 0) {
+    const matched = selectedSpecialties.filter((s) =>
+      t.specialties.some((ts) => ts.toLowerCase().includes(s.toLowerCase()))
+    );
+    if (matched.length < selectedSpecialties.length) isMatch = false;
+    matchScore += matched.length;
+  }
+
+  // Tier filter
+  if (tier !== "all") {
+    if (t.tier !== tier) isMatch = false;
+    else matchScore += 1;
+  }
+
+  return { isMatch, matchScore };
+}
+
 export default function TherapistsPage() {
-  const [therapists, setTherapists] = useState<Therapist[]>([]);
+  const [allTherapists, setAllTherapists] = useState<Therapist[]>([]);
+  const [matched, setMatched] = useState<TherapistWithMatch[]>([]);
+  const [suggestions, setSuggestions] = useState<TherapistWithMatch[]>([]);
   const [loading, setLoading] = useState(true);
-  const [visible, setVisible] = useState(true); // fade transition
+  const [visible, setVisible] = useState(true);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -437,105 +488,59 @@ export default function TherapistsPage() {
     setLoading(true);
 
     try {
-      const params = new URLSearchParams();
-      if (language !== "All Languages") params.set("language", language);
-      if (selectedSpecialties.length > 0)
-        params.set("specialty", selectedSpecialties[0]); // API takes one specialty
-      if (tier !== "all") params.set("tier", tier);
-
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-      const res = await fetch(
-        `${apiUrl}/api/therapists?${params.toString()}`
-      );
-
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+      const res = await fetch(`${apiUrl}/api/therapists`);
       let data: Therapist[] = [];
       if (res.ok) {
         const json = await res.json();
         const raw = json?.therapists ?? json;
         data = Array.isArray(raw) ? raw : [];
       }
-
-      // Fallback to static data if API returns empty
-      if (data.length === 0) {
-        data = ALL_THERAPISTS as Therapist[];
-      }
-
-      // Client-side search filter
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        data = data.filter((t) => t.full_name.toLowerCase().includes(q));
-      }
-
-      // Client-side multi-specialty filter (AND logic after first)
-      if (selectedSpecialties.length > 1) {
-        data = data.filter((t) =>
-          selectedSpecialties.every((s) =>
-            t.specialties.some((ts) =>
-              ts.toLowerCase().includes(s.toLowerCase())
-            )
-          )
-        );
-      }
-
-      // Sort
-      if (sort === "experience") {
-        data = [...data].sort(
-          (a, b) => (b.experience_years ?? 0) - (a.experience_years ?? 0)
-        );
-      } else if (sort === "rate_asc") {
-        data = [...data].sort(
-          (a, b) => a.session_rate_cents - b.session_rate_cents
-        );
-      }
-
-      setTherapists(data);
+      if (data.length === 0) data = ALL_THERAPISTS as Therapist[];
+      setAllTherapists(data);
     } catch {
-      // Use static therapist data as fallback when API is unavailable
-      let data: Therapist[] = ALL_THERAPISTS as Therapist[];
-
-      // Apply client-side filters to fallback data
-      if (language !== "All Languages") {
-        data = data.filter((t) =>
-          t.languages.some((l) => l.toLowerCase() === language.toLowerCase())
-        );
-      }
-      if (tier !== "all") {
-        data = data.filter((t) => t.tier === tier);
-      }
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        data = data.filter((t) => t.full_name.toLowerCase().includes(q));
-      }
-      if (selectedSpecialties.length > 0) {
-        data = data.filter((t) =>
-          selectedSpecialties.every((s) =>
-            t.specialties.some((ts) =>
-              ts.toLowerCase().includes(s.toLowerCase())
-            )
-          )
-        );
-      }
-      if (sort === "experience") {
-        data = [...data].sort(
-          (a, b) => (b.experience_years ?? 0) - (a.experience_years ?? 0)
-        );
-      } else if (sort === "rate_asc") {
-        data = [...data].sort(
-          (a, b) => a.session_rate_cents - b.session_rate_cents
-        );
-      }
-      setTherapists(data);
+      setAllTherapists(ALL_THERAPISTS as Therapist[]);
     } finally {
       setLoading(false);
       setTimeout(() => setVisible(true), 50);
     }
-  }, [language, selectedSpecialties, tier, sort, search]);
+  }, []);
 
-  // Debounced fetch on filter change
+  // Apply filters client-side whenever allTherapists or filters change
   useEffect(() => {
-    const timer = setTimeout(fetchTherapists, 300);
-    return () => clearTimeout(timer);
+    const hasFilters =
+      search.trim() ||
+      language !== "All Languages" ||
+      selectedSpecialties.length > 0 ||
+      tier !== "all";
+
+    const scored: TherapistWithMatch[] = allTherapists.map((t) => ({
+      ...t,
+      ...scoreTherapist(t, search, language, selectedSpecialties, tier),
+    }));
+
+    const applySort = (list: TherapistWithMatch[]) => {
+      if (sort === "experience")
+        return [...list].sort((a, b) => (b.experience_years ?? 0) - (a.experience_years ?? 0));
+      if (sort === "rate_asc")
+        return [...list].sort((a, b) => a.session_rate_cents - b.session_rate_cents);
+      return [...list].sort((a, b) => b.matchScore - a.matchScore);
+    };
+
+    if (!hasFilters) {
+      setMatched(applySort(scored));
+      setSuggestions([]);
+    } else {
+      const hits = scored.filter((t) => t.isMatch);
+      const misses = scored.filter((t) => !t.isMatch);
+      setMatched(applySort(hits));
+      setSuggestions(applySort(misses));
+    }
+  }, [allTherapists, search, language, selectedSpecialties, tier, sort]);
+
+  // Fetch all therapists once on mount
+  useEffect(() => {
+    fetchTherapists();
   }, [fetchTherapists]);
 
   const itemListSchema = getItemListSchema(ALL_THERAPISTS);
@@ -583,10 +588,12 @@ export default function TherapistsPage() {
 
         {/* Results count */}
         {!loading && (
-          <p className="text-sm text-gray-500 mb-5">
-            {therapists.length === 0
-              ? "No results"
-              : `${therapists.length} therapist${therapists.length !== 1 ? "s" : ""} found`}
+          <p className="text-sm text-gray-700 font-medium mb-5">
+            {matched.length === 0 && suggestions.length === 0
+              ? "No therapists found"
+              : matched.length > 0
+              ? `${matched.length} therapist${matched.length !== 1 ? "s" : ""} found`
+              : `0 exact matches — showing ${suggestions.length} best alternatives`}
           </p>
         )}
 
@@ -601,36 +608,59 @@ export default function TherapistsPage() {
                 <SkeletonCard key={i} />
               ))}
             </div>
-          ) : therapists.length === 0 ? (
-            /* Empty state */
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="text-5xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No therapists found with these filters
-              </h3>
-              <p className="text-gray-500 mb-6 max-w-md">
-                Try removing some filters or reach out to us on WhatsApp and
-                we&apos;ll help you find the right match.
-              </p>
-              <a
-                href="https://wa.me/18568782862"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1DA851] transition-colors"
-              >
-                <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.12.553 4.106 1.522 5.832L.057 23.428a.75.75 0 00.921.921l5.596-1.465A11.946 11.946 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.718 9.718 0 01-4.976-1.366l-.356-.213-3.699.97.987-3.603-.233-.371A9.718 9.718 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z" />
-                </svg>
-                Contact Us on WhatsApp
-              </a>
-            </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {therapists.map((t) => (
-                <TherapistCard key={t.id} therapist={t} />
-              ))}
-            </div>
+            <>
+              {/* Matched results */}
+              {matched.length > 0 && (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  {matched.map((t) => (
+                    <TherapistCard key={t.id} therapist={t} />
+                  ))}
+                </div>
+              )}
+
+              {/* Zero matches banner + suggestions */}
+              {matched.length === 0 && (
+                <div className="mb-8">
+                  <div className="flex flex-col items-center justify-center py-10 text-center bg-white rounded-2xl border border-gray-100 shadow-sm mb-8">
+                    <div className="text-5xl mb-3">🔍</div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                      0 exact matches for your filters
+                    </h3>
+                    <p className="text-gray-600 max-w-md">
+                      Here are our best matching therapists that may still help you.
+                    </p>
+                  </div>
+
+                  {suggestions.length > 0 && (
+                    <>
+                      <p className="text-sm font-semibold text-[#7B5FB8] mb-4 uppercase tracking-wide">
+                        Best matching therapists
+                      </p>
+                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        {suggestions.map((t) => (
+                          <TherapistCard key={t.id} therapist={t} />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Suggestions section when there ARE matches */}
+              {matched.length > 0 && suggestions.length > 0 && (
+                <div className="mt-10">
+                  <p className="text-sm font-semibold text-gray-400 mb-4 uppercase tracking-wide">
+                    Other therapists you may like
+                  </p>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 opacity-70">
+                    {suggestions.map((t) => (
+                      <TherapistCard key={t.id} therapist={t} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

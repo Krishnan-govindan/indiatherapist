@@ -42,3 +42,17 @@ body {
   font-family: 'Outfit', 'Poppins', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Ensure body copy text is dark and readable on mobile */
+p, li, blockquote {
+  color: #374151;
+}
+
+/* Language tag subtle pulse animation */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}
