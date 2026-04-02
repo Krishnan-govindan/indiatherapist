@@ -116,7 +116,7 @@ function AvatarInitials({ name }: { name: string }) {
     .slice(0, 2)
     .join("");
   return (
-    <div className="h-24 w-24 rounded-full bg-[#7B5FB8]/10 flex items-center justify-center shrink-0">
+    <div className="h-28 w-28 rounded-full bg-[#7B5FB8]/10 flex items-center justify-center shrink-0">
       <span className="text-xl font-semibold text-[#7B5FB8]">{initials}</span>
     </div>
   );
@@ -131,15 +131,15 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
   const isElite = therapist.tier === "elite";
 
   return (
-    <div className="group rounded-2xl bg-white border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+    <div className="group rounded-2xl bg-white border border-gray-100 p-8 shadow-sm hover:shadow-md transition-shadow flex flex-col">
       {/* Avatar + name row */}
-      <div className="flex items-start gap-4 mb-4">
+      <div className="flex items-start gap-5 mb-5">
         {therapist.photo_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={therapist.photo_url}
             alt={therapist.full_name}
-            className="h-24 w-24 rounded-full object-cover shrink-0"
+            className="h-28 w-28 rounded-full object-cover shrink-0"
           />
         ) : (
           <AvatarInitials name={therapist.full_name} />
@@ -147,13 +147,13 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
 
         <div className="min-w-0">
           {/* Name + verified */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <h3 className="font-semibold text-gray-900 text-base leading-tight">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-gray-900 text-lg leading-tight">
               {therapist.full_name}
             </h3>
             <span
               title="Verified therapist"
-              className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#7B5FB8] text-white text-[10px] shrink-0"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#7B5FB8] text-white text-xs shrink-0"
             >
               ✓
             </span>
@@ -161,14 +161,14 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
 
           {/* Experience */}
           {therapist.experience_years && (
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-base text-gray-500 mt-1">
               {therapist.experience_years} years experience
             </p>
           )}
 
           {/* Tier badge */}
           <span
-            className={`inline-block mt-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
+            className={`inline-block mt-2 rounded-full px-3 py-1 text-sm font-semibold capitalize ${
               isElite
                 ? "bg-amber-100 text-amber-800"
                 : "bg-[#7B5FB8]/10 text-[#7B5FB8]"
@@ -180,11 +180,11 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
       </div>
 
       {/* Specialty tags */}
-      <div className="flex flex-wrap gap-1.5 mb-3">
+      <div className="flex flex-wrap gap-2 mb-4">
         {therapist.specialties.slice(0, 3).map((s) => (
           <span
             key={s}
-            className="rounded-full bg-[#A78BDE]/15 px-2.5 py-0.5 text-xs font-medium text-[#6B4AA0]"
+            className="rounded-full bg-[#A78BDE]/15 px-3 py-1 text-sm font-medium text-[#6B4AA0]"
           >
             {s}
           </span>
@@ -192,11 +192,11 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
       </div>
 
       {/* Language badges */}
-      <div className="flex flex-wrap gap-1.5 mb-3">
+      <div className="flex flex-wrap gap-2 mb-4">
         {therapist.languages.map((lang) => (
           <span
             key={lang}
-            className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600"
+            className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600"
           >
             {lang}
           </span>
@@ -205,27 +205,27 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
 
       {/* Bio excerpt */}
       {therapist.bio && (
-        <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">
+        <p className="text-base text-gray-500 line-clamp-2 mb-5 flex-1">
           {therapist.bio}
         </p>
       )}
 
       {/* Rate + CTAs */}
       <div className="mt-auto">
-        <p className="text-base font-semibold text-gray-900 mb-3">
+        <p className="text-lg font-semibold text-gray-900 mb-3">
           ${rate}
-          <span className="text-sm font-normal text-gray-400">/session</span>
+          <span className="text-base font-normal text-gray-400">/session</span>
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Link
             href={`/therapists/${therapist.slug}`}
-            className="flex-1 rounded-full border border-[#7B5FB8] px-4 py-2 text-sm font-semibold text-[#7B5FB8] hover:bg-[#7B5FB8] hover:text-white transition-colors text-center"
+            className="flex-1 rounded-full border border-[#7B5FB8] px-5 py-3 text-base font-semibold text-[#7B5FB8] hover:bg-[#7B5FB8] hover:text-white transition-colors text-center"
           >
             View Profile
           </Link>
           <Link
             href={`/book?therapist=${therapist.slug}`}
-            className="flex-1 rounded-full bg-[#7B5FB8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#6B4AA0] transition-colors text-center"
+            className="flex-1 rounded-full bg-[#7B5FB8] px-5 py-3 text-base font-semibold text-white hover:bg-[#6B4AA0] transition-colors text-center"
           >
             Book Now
           </Link>
