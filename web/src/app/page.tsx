@@ -97,7 +97,6 @@ function Hero() {
 
 const trustItems = [
   "🌏 NRIs in 14+ countries",
-  "👩‍⚕️ 26 therapists",
   "🗣️ 12 languages",
   "💰 From $39/session",
 ];
