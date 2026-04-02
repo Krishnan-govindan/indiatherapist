@@ -17,10 +17,10 @@ export default function Navbar() {
           <Image
             src="/logo.png"
             alt="India Therapist — Online Therapy for NRIs"
-            width={160}
-            height={64}
+            width={200}
+            height={80}
             priority
-            className="h-16 w-auto object-contain transition-opacity group-hover:opacity-80"
+            className="h-20 w-auto object-contain transition-opacity group-hover:opacity-80"
           />
         </Link>
 
@@ -30,7 +30,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-gray-600 hover:text-[#7B5FB8] transition-colors"
+              className="text-base font-semibold text-gray-900 hover:text-[#7B5FB8] transition-colors"
             >
               {link.label}
             </Link>
