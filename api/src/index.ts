@@ -18,6 +18,7 @@ import adminWhatsappRouter from './routes/adminWhatsapp';
 import adminBlogsRouter from './routes/adminBlogs';
 import blogsRouter from './routes/blogs';
 import checkoutRouter from './routes/checkout';
+import chatRouter from './routes/chat';
 
 // ── Webhook imports ──────────────────────────────────────────
 import metaWhatsappRouter from './webhooks/metaWhatsapp';
@@ -77,6 +78,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/admin/whatsapp', adminWhatsappRouter);
 app.use('/api/blogs', blogsRouter);
 app.use('/api/checkout', checkoutRouter);
+app.use('/api/chat', chatRouter);
 
 // ── Webhook routes ───────────────────────────────────────────
 app.use('/webhooks/meta-wa', metaWhatsappRouter);
