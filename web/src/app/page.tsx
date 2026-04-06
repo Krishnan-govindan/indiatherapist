@@ -609,21 +609,21 @@ function Footer() {
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-2 lg:grid-cols-4 mb-12">
           {/* Brand */}
           <div className="col-span-2 lg:col-span-1">
-            <p className="text-xl font-semibold mb-3" style={{ color: 'white' }}>India Therapist</p>
-            <p className="text-sm leading-relaxed" style={{ color: '#C4B5F0' }}>
+            <p className="text-2xl font-bold mb-3" style={{ color: 'white' }}>India Therapist</p>
+            <p className="text-base leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>
               Therapy for NRIs, by therapists who understand your world.
             </p>
           </div>
 
           {/* Therapists */}
           <div>
-            <h4 className="font-semibold mb-4 text-xs uppercase tracking-wider text-[#A78BDE]">
+            <h4 className="font-bold mb-5 text-sm uppercase tracking-wider" style={{ color: 'white' }}>
               Therapists
             </h4>
-            <ul className="space-y-2.5 text-sm text-[#C4B5F0]">
+            <ul className="space-y-3 text-base">
               {["Find a Therapist", "Anxiety & Stress", "Relationships", "Family Therapy", "Grief & Loss"].map((l) => (
                 <li key={l}>
-                  <Link href="/therapists" className="hover:text-white transition-colors">
+                  <Link href="/therapists" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>
                     {l}
                   </Link>
                 </li>
@@ -633,35 +633,35 @@ function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className="font-semibold mb-4 text-xs uppercase tracking-wider text-[#A78BDE]">
+            <h4 className="font-bold mb-5 text-sm uppercase tracking-wider" style={{ color: 'white' }}>
               Company
             </h4>
-            <ul className="space-y-2.5 text-sm text-[#C4B5F0]">
-              <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="/#how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
-              <li><a href="https://blogs.indiatherapist.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Blog</a></li>
-              <li><Link href="/therapists" className="hover:text-white transition-colors">For Therapists</Link></li>
+            <ul className="space-y-3 text-base">
+              <li><Link href="/about" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>About Us</Link></li>
+              <li><Link href="/#how-it-works" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>How It Works</Link></li>
+              <li><a href="https://blogs.indiatherapist.com" target="_blank" rel="noopener noreferrer" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>Blog</a></li>
+              <li><Link href="/therapists" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>For Therapists</Link></li>
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h4 className="font-semibold mb-4 text-xs uppercase tracking-wider text-[#A78BDE]">
+            <h4 className="font-bold mb-5 text-sm uppercase tracking-wider" style={{ color: 'white' }}>
               Legal
             </h4>
-            <ul className="space-y-2.5 text-sm text-[#C4B5F0]">
-              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
-              <li><Link href="/terms" className="hover:text-white transition-colors">Refund Policy</Link></li>
+            <ul className="space-y-3 text-base">
+              <li><Link href="/privacy" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>Privacy Policy</Link></li>
+              <li><Link href="/terms" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>Terms of Service</Link></li>
+              <li><Link href="/terms" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>Refund Policy</Link></li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <p className="text-sm" style={{ color: '#C4B5F0' }}>
+        <div className="border-t border-white/20 pt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <p className="text-base" style={{ color: 'rgba(255,255,255,0.85)' }}>
             © 2026 India Therapist. All rights reserved.
           </p>
-          <p className="text-xs max-w-md leading-relaxed" style={{ color: '#C4B5F0' }}>
+          <p className="text-sm max-w-md leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>
             ⚠️ India Therapist is not a crisis service. If you are in immediate
             danger, please contact your local emergency services or a crisis
             helpline.
