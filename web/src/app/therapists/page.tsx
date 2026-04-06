@@ -141,14 +141,6 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
         ? "border-2 border-amber-300 ring-1 ring-amber-200/50"
         : "border-2 border-[#7B5FB8]/30"
     }`}>
-      {/* Elite ribbon */}
-      {isElite && (
-        <div className="mb-3 flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-50 to-amber-100 px-3 py-1.5 -mt-2">
-          <span className="text-amber-600 text-sm">⭐</span>
-          <span className="text-xs font-bold uppercase tracking-wide text-amber-700">Elite Therapist</span>
-        </div>
-      )}
-
       {/* Avatar + name row */}
       <div className="flex items-start gap-5 mb-5">
         {therapist.photo_url ? (

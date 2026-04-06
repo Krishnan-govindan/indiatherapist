@@ -109,7 +109,7 @@ function MissionStatement() {
   return (
     <section className="bg-gradient-to-r from-[#7B5FB8] to-[#553888] py-10 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl text-center">
-        <p className="text-white text-xl sm:text-2xl font-semibold leading-relaxed">
+        <p className="text-xl sm:text-2xl font-semibold leading-relaxed" style={{ color: 'white' }}>
           🌍 Our Mission:{" "}
           <span className="text-[#E0D5FF]">
             Create mental health awareness among NRIs
@@ -222,7 +222,7 @@ function HowItWorks() {
             How it{" "}
             <span className="text-[#A78BDE]">works</span>
           </h2>
-          <p className="text-gray-300 text-xl">
+          <p className="text-xl" style={{ color: 'rgba(255,255,255,0.85)' }}>
             From first message to first session in less than 24 hours.
           </p>
         </div>
@@ -239,7 +239,7 @@ function HowItWorks() {
               <h3 className="mb-2 text-xl font-semibold text-white">
                 {step.title}
               </h3>
-              <p className="text-gray-300 text-base leading-relaxed max-w-xs mx-auto">
+              <p className="text-base leading-relaxed max-w-xs mx-auto" style={{ color: 'rgba(255,255,255,0.85)' }}>
                 {step.body}
               </p>
             </div>
@@ -337,7 +337,7 @@ const services = [
     icon: "💙",
     title: "Depression & Stress",
     body: "Coping with isolation, adjustment struggles, and the mental load of building a life far from home.",
-    image: "/images/svc-depression.jpg",
+    image: "/images/svc-depression-2.jpg",
   },
   {
     icon: "💑",
@@ -609,8 +609,8 @@ function Footer() {
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-2 lg:grid-cols-4 mb-12">
           {/* Brand */}
           <div className="col-span-2 lg:col-span-1">
-            <p className="text-xl font-semibold mb-3">India Therapist</p>
-            <p className="text-[#C4B5F0] text-sm leading-relaxed">
+            <p className="text-xl font-semibold mb-3" style={{ color: 'white' }}>India Therapist</p>
+            <p className="text-sm leading-relaxed" style={{ color: '#C4B5F0' }}>
               Therapy for NRIs, by therapists who understand your world.
             </p>
           </div>
@@ -658,10 +658,10 @@ function Footer() {
         </div>
 
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <p className="text-[#C4B5F0] text-sm">
+          <p className="text-sm" style={{ color: '#C4B5F0' }}>
             © 2026 India Therapist. All rights reserved.
           </p>
-          <p className="text-[#8B7AA0] text-xs max-w-md leading-relaxed">
+          <p className="text-xs max-w-md leading-relaxed" style={{ color: '#C4B5F0' }}>
             ⚠️ India Therapist is not a crisis service. If you are in immediate
             danger, please contact your local emergency services or a crisis
             helpline.
