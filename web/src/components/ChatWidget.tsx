@@ -56,11 +56,101 @@ function fmtDate(ts: number) {
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
-// ─── Welcome message (display-only, not sent to API) ──────────
+// ─── Markdown renderer ────────────────────────────────────────
+function renderInline(text: string): React.ReactNode[] {
+  // Handle **bold** and *italic*
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    }
+    return part;
+  });
+}
+
+function renderMarkdown(text: string, isUser: boolean): React.ReactNode {
+  const lines = text.split("\n");
+  const nodes: React.ReactNode[] = [];
+  let listBuffer: string[] = [];
+  let listType: "ul" | "ol" | null = null;
+
+  const flushList = () => {
+    if (!listBuffer.length) return;
+    if (listType === "ul") {
+      nodes.push(
+        <ul key={nodes.length} className="mt-1 mb-1 space-y-1 pl-1">
+          {listBuffer.map((item, i) => (
+            <li key={i} className="flex items-start gap-2">
+              <span
+                className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                style={{ background: isUser ? "rgba(255,255,255,0.7)" : "#7B5FB8" }}
+              />
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ul>
+      );
+    } else {
+      nodes.push(
+        <ol key={nodes.length} className="mt-1 mb-1 space-y-1 pl-1 list-none">
+          {listBuffer.map((item, i) => (
+            <li key={i} className="flex items-start gap-2">
+              <span
+                className="mt-0.5 flex-shrink-0 text-xs font-bold"
+                style={{ color: isUser ? "rgba(255,255,255,0.7)" : "#7B5FB8" }}
+              >
+                {i + 1}.
+              </span>
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ol>
+      );
+    }
+    listBuffer = [];
+    listType = null;
+  };
+
+  lines.forEach((line, idx) => {
+    const ulMatch = line.match(/^[-•*]\s+(.*)/);
+    const olMatch = line.match(/^\d+\.\s+(.*)/);
+
+    if (ulMatch) {
+      if (listType === "ol") flushList();
+      listType = "ul";
+      listBuffer.push(ulMatch[1]);
+    } else if (olMatch) {
+      if (listType === "ul") flushList();
+      listType = "ol";
+      listBuffer.push(olMatch[1]);
+    } else {
+      flushList();
+      if (line.trim() === "") {
+        if (idx > 0 && idx < lines.length - 1) {
+          nodes.push(<div key={nodes.length} className="h-2" />);
+        }
+      } else {
+        nodes.push(
+          <p key={nodes.length} className="leading-relaxed">
+            {renderInline(line)}
+          </p>
+        );
+      }
+    }
+  });
+  flushList();
+
+  return <div className="space-y-0.5 text-sm">{nodes}</div>;
+}
+
+// ─── Welcome message ──────────────────────────────────────────
 const WELCOME: Message = {
   role: "assistant",
   content:
-    "Namaste! 🙏 I'm the India Therapist AI assistant.\n\nI'm here to help you find the right therapist, answer questions about our platform, and support you on your journey. How can I help you today?",
+    "Namaste! 🙏 I'm the India Therapist AI assistant.\n\nI'm here to help you find the right therapist, answer questions about our platform, and support you on your journey.\n\nHow can I help you today?",
   ts: 0,
 };
 
@@ -73,12 +163,10 @@ export default function ChatWidget() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState("");
-  const [hasUnread, setHasUnread] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // ── Load from localStorage on mount
   useEffect(() => {
     const saved = readChats();
     setChatsLocal(saved);
@@ -86,33 +174,22 @@ export default function ChatWidget() {
     if (savedId && saved.find((c) => c.id === savedId)) {
       setActiveId(savedId);
     }
-    // Show unread indicator if there are existing chats
-    if (saved.length > 0 && !isOpen) setHasUnread(false);
   }, []);
 
-  // ── Persist active id
   useEffect(() => {
     if (activeId) localStorage.setItem(ACTIVE_KEY, activeId);
   }, [activeId]);
 
-  // ── Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chats, streaming, isOpen]);
 
-  // ── Focus input when chat opens
   useEffect(() => {
     if (isOpen && !loading) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen, loading]);
 
-  // ── Clear unread on open
-  useEffect(() => {
-    if (isOpen) setHasUnread(false);
-  }, [isOpen]);
-
-  // ── Mutate chats state + persist
   const mutateChats = useCallback(
     (fn: (prev: ChatSession[]) => ChatSession[]) => {
       setChatsLocal((prev) => {
@@ -129,7 +206,6 @@ export default function ChatWidget() {
     ? [WELCOME, ...activeChat.messages]
     : [WELCOME];
 
-  // ── Create new chat
   const newChat = useCallback(() => {
     const chat: ChatSession = {
       id: genId(),
@@ -143,7 +219,6 @@ export default function ChatWidget() {
     setShowHistory(false);
   }, [mutateChats]);
 
-  // ── Send message
   const sendMessage = useCallback(async () => {
     const text = input.trim();
     if (!text || loading) return;
@@ -151,7 +226,6 @@ export default function ChatWidget() {
 
     const userMsg: Message = { role: "user", content: text, ts: Date.now() };
 
-    // Ensure there's an active chat
     let chatId = activeId;
     let prevMessages: Message[] = [];
 
@@ -169,7 +243,6 @@ export default function ChatWidget() {
     } else {
       const current = chats.find((c) => c.id === chatId)!;
       prevMessages = current.messages;
-      // Set title from first user message
       if (prevMessages.length === 0) {
         mutateChats((prev) =>
           prev.map((c) =>
@@ -181,12 +254,12 @@ export default function ChatWidget() {
       }
     }
 
-    const updatedMessages = [...prevMessages, userMsg];
+    const updated = [...prevMessages, userMsg];
 
     mutateChats((prev) =>
       prev.map((c) =>
         c.id === chatId
-          ? { ...c, messages: updatedMessages, updatedAt: Date.now() }
+          ? { ...c, messages: updated, updatedAt: Date.now() }
           : c
       )
     );
@@ -199,10 +272,7 @@ export default function ChatWidget() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: updatedMessages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          messages: updated.map((m) => ({ role: m.role, content: m.content })),
         }),
       });
 
@@ -222,14 +292,9 @@ export default function ChatWidget() {
             const payload = line.slice(6);
             if (payload === "[DONE]") break;
             try {
-              const { text } = JSON.parse(payload);
-              if (text) {
-                full += text;
-                setStreaming(full);
-              }
-            } catch {
-              // ignore parse errors
-            }
+              const { text: t } = JSON.parse(payload);
+              if (t) { full += t; setStreaming(full); }
+            } catch { /* ignore */ }
           }
         }
       }
@@ -243,27 +308,25 @@ export default function ChatWidget() {
       mutateChats((prev) =>
         prev.map((c) =>
           c.id === chatId
-            ? {
-                ...c,
-                messages: [...updatedMessages, aiMsg],
-                updatedAt: Date.now(),
-              }
+            ? { ...c, messages: [...updated, aiMsg], updatedAt: Date.now() }
             : c
         )
       );
     } catch {
-      const errMsg: Message = {
-        role: "assistant",
-        content:
-          "I'm having trouble connecting right now. Please try again in a moment, or reach us on WhatsApp for immediate help.",
-        ts: Date.now(),
-      };
       mutateChats((prev) =>
         prev.map((c) =>
           c.id === chatId
             ? {
                 ...c,
-                messages: [...updatedMessages, errMsg],
+                messages: [
+                  ...updated,
+                  {
+                    role: "assistant" as const,
+                    content:
+                      "I'm having trouble connecting. Please try again or reach us on WhatsApp at +1 (856) 878-2862.",
+                    ts: Date.now(),
+                  },
+                ],
                 updatedAt: Date.now(),
               }
             : c
@@ -282,7 +345,6 @@ export default function ChatWidget() {
     }
   };
 
-  // ── Quick-start prompts
   const quickPrompts = [
     "How does India Therapist work?",
     "What languages do you support?",
@@ -295,49 +357,56 @@ export default function ChatWidget() {
       {/* ── Chat Window ── */}
       {isOpen && (
         <div
-          className="fixed bottom-44 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
-          style={{ width: "min(380px, calc(100vw - 32px))", height: "540px" }}
+          className="fixed right-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+          style={{
+            bottom: "calc(6rem + 4.5rem)",
+            width: "min(390px, calc(100vw - 24px))",
+            height: "min(620px, calc(100vh - 180px))",
+          }}
         >
           {/* Header */}
           <div className="flex flex-shrink-0 items-center justify-between bg-gradient-to-r from-[#7B5FB8] to-[#553888] px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
+                style={{ background: "rgba(255,255,255,0.2)", color: "white" }}
+              >
                 AI
               </div>
               <div>
-                <p className="text-sm font-semibold leading-none text-white">
+                <p className="text-sm font-semibold leading-none" style={{ color: "white" }}>
                   India Therapist AI
                 </p>
-                <p className="mt-0.5 text-xs text-white/70">
+                <p className="mt-0.5 text-xs" style={{ color: "rgba(255,255,255,0.85)" }}>
                   Ask me anything
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              {/* New Chat */}
               <button
                 onClick={newChat}
                 title="New Chat"
-                className="rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-1.5 transition-colors hover:bg-white/10"
+                style={{ color: "rgba(255,255,255,0.85)" }}
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
               </button>
-              {/* History */}
               <button
                 onClick={() => setShowHistory((h) => !h)}
                 title="Chat History"
-                className={`rounded-lg p-1.5 transition-colors hover:bg-white/10 ${showHistory ? "bg-white/20 text-white" : "text-white/70 hover:text-white"}`}
+                className="rounded-lg p-1.5 transition-colors hover:bg-white/10"
+                style={{ color: showHistory ? "white" : "rgba(255,255,255,0.85)", background: showHistory ? "rgba(255,255,255,0.2)" : undefined }}
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </button>
-              {/* Close */}
               <button
                 onClick={() => { setIsOpen(false); setShowHistory(false); }}
-                className="rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-1.5 transition-colors hover:bg-white/10"
+                style={{ color: "rgba(255,255,255,0.85)" }}
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -346,7 +415,7 @@ export default function ChatWidget() {
             </div>
           </div>
 
-          {/* History Panel (slide in over messages) */}
+          {/* History Panel */}
           {showHistory && (
             <div className="absolute inset-x-0 bottom-0 top-[57px] z-10 flex flex-col overflow-hidden bg-white">
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
@@ -363,7 +432,7 @@ export default function ChatWidget() {
               </div>
               <div className="flex-1 overflow-y-auto">
                 {chats.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400">
+                  <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400 py-10">
                     <svg className="h-10 w-10 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
@@ -398,22 +467,27 @@ export default function ChatWidget() {
                   className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} items-end gap-2`}
                 >
                   {msg.role === "assistant" && (
-                    <div className="mb-4 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#7B5FB8] text-[10px] font-bold text-white">
+                    <div
+                      className="mb-5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                      style={{ background: "#7B5FB8" }}
+                    >
                       AI
                     </div>
                   )}
                   <div
-                    className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 ${
+                    className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 ${
                       msg.role === "user"
-                        ? "rounded-br-sm bg-[#7B5FB8] text-white"
+                        ? "rounded-br-sm text-white"
                         : "rounded-bl-sm border border-gray-100 bg-white text-gray-800 shadow-sm"
                     }`}
+                    style={msg.role === "user" ? { background: "#7B5FB8" } : undefined}
                   >
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {msg.content}
-                    </p>
+                    {renderMarkdown(msg.content, msg.role === "user")}
                     {msg.ts > 0 && (
-                      <p className={`mt-1 text-[10px] ${msg.role === "user" ? "text-white/60" : "text-gray-400"}`}>
+                      <p
+                        className="mt-1.5 text-[10px]"
+                        style={{ color: msg.role === "user" ? "rgba(255,255,255,0.6)" : "#9ca3af" }}
+                      >
                         {fmtTime(msg.ts)}
                       </p>
                     )}
@@ -421,25 +495,31 @@ export default function ChatWidget() {
                 </div>
               ))}
 
-              {/* Streaming / loading bubble */}
+              {/* Streaming / loading */}
               {loading && (
                 <div className="flex items-end gap-2 justify-start">
-                  <div className="mb-4 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#7B5FB8] text-[10px] font-bold text-white">
+                  <div
+                    className="mb-5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                    style={{ background: "#7B5FB8" }}
+                  >
                     AI
                   </div>
-                  <div className="max-w-[78%] rounded-2xl rounded-bl-sm border border-gray-100 bg-white px-3.5 py-2.5 shadow-sm">
+                  <div className="max-w-[80%] rounded-2xl rounded-bl-sm border border-gray-100 bg-white px-3.5 py-2.5 shadow-sm">
                     {streaming ? (
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
-                        {streaming}
-                        <span className="ml-0.5 inline-block h-3.5 w-1 animate-pulse rounded-sm bg-[#7B5FB8]" />
-                      </p>
+                      <div className="text-sm leading-relaxed text-gray-800">
+                        {renderMarkdown(streaming, false)}
+                        <span
+                          className="ml-0.5 inline-block h-3.5 w-1 animate-pulse rounded-sm"
+                          style={{ background: "#7B5FB8" }}
+                        />
+                      </div>
                     ) : (
                       <div className="flex items-center gap-1 py-0.5">
                         {[0, 150, 300].map((delay) => (
                           <span
                             key={delay}
-                            className="h-2 w-2 rounded-full bg-[#7B5FB8]/50 animate-bounce"
-                            style={{ animationDelay: `${delay}ms` }}
+                            className="h-2 w-2 rounded-full animate-bounce"
+                            style={{ background: "rgba(123,95,184,0.5)", animationDelay: `${delay}ms` }}
                           />
                         ))}
                       </div>
@@ -448,12 +528,10 @@ export default function ChatWidget() {
                 </div>
               )}
 
-              {/* Quick prompts — shown only on empty chat */}
+              {/* Quick prompts */}
               {displayMessages.length === 1 && !loading && (
                 <div className="pt-2">
-                  <p className="mb-2 text-center text-xs text-gray-400">
-                    Quick questions
-                  </p>
+                  <p className="mb-2 text-center text-xs text-gray-400">Quick questions</p>
                   <div className="grid grid-cols-2 gap-2">
                     {quickPrompts.map((q) => (
                       <button
@@ -462,7 +540,8 @@ export default function ChatWidget() {
                           setInput(q);
                           setTimeout(() => inputRef.current?.focus(), 50);
                         }}
-                        className="rounded-xl border border-[#7B5FB8]/20 bg-white px-3 py-2 text-left text-xs text-[#553888] hover:border-[#7B5FB8]/50 hover:bg-purple-50 transition-colors"
+                        className="rounded-xl border px-3 py-2 text-left text-xs transition-colors hover:bg-purple-50"
+                        style={{ borderColor: "rgba(123,95,184,0.2)", color: "#553888" }}
                       >
                         {q}
                       </button>
@@ -477,13 +556,15 @@ export default function ChatWidget() {
 
           {/* Input */}
           <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-3">
-            <div className="flex items-end gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 focus-within:border-[#7B5FB8] transition-colors">
+            <div
+              className="flex items-end gap-2 rounded-xl border bg-gray-50 px-3 py-2 transition-colors focus-within:border-[#7B5FB8]"
+              style={{ borderColor: "#e5e7eb" }}
+            >
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value);
-                  // Auto-resize
                   e.target.style.height = "auto";
                   e.target.style.height = Math.min(e.target.scrollHeight, 80) + "px";
                 }}
@@ -497,7 +578,8 @@ export default function ChatWidget() {
               <button
                 onClick={sendMessage}
                 disabled={!input.trim() || loading}
-                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#7B5FB8] text-white transition-colors hover:bg-[#6B4AA0] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-white transition-colors hover:bg-[#6B4AA0] disabled:cursor-not-allowed disabled:opacity-40"
+                style={{ background: "#7B5FB8" }}
               >
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -513,17 +595,11 @@ export default function ChatWidget() {
 
       {/* ── Floating Button ── */}
       <button
-        onClick={() => {
-          setIsOpen((o) => !o);
-          setShowHistory(false);
-        }}
+        onClick={() => { setIsOpen((o) => !o); setShowHistory(false); }}
         aria-label="Chat with India Therapist AI"
-        className="fixed bottom-24 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#7B5FB8] shadow-lg shadow-[#7B5FB8]/30 transition-all hover:bg-[#6B4AA0] hover:scale-105 active:scale-95"
+        className="fixed bottom-24 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
+        style={{ background: "#7B5FB8", boxShadow: "0 4px 20px rgba(123,95,184,0.4)" }}
       >
-        {/* Unread dot */}
-        {hasUnread && !isOpen && (
-          <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-red-500" />
-        )}
         {isOpen ? (
           <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
