@@ -49,7 +49,7 @@ function Hero() {
             className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            #1 Online Indian Therapy Platform{" "}
+            <span className="text-[#7B5FB8]">#1 Online Indian Therapy</span>{" "}Platform{" "}
             <span className="text-[#7B5FB8] italic">for NRIs</span>
           </h1>
 
