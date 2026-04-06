@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import ChatWidget from "@/components/ChatWidget";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -102,7 +103,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={outfit.variable}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <ChatWidget />
+      </body>
       {/* Google Analytics — set NEXT_PUBLIC_GA_ID in environment variables */}
       {process.env.NEXT_PUBLIC_GA_ID && (
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
