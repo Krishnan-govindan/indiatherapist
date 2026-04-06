@@ -102,6 +102,26 @@ const trustItems = [
 ];
 
 // ─────────────────────────────────────────────────────────────
+// Mission Statement
+// ─────────────────────────────────────────────────────────────
+
+function MissionStatement() {
+  return (
+    <section className="bg-gradient-to-r from-[#7B5FB8] to-[#553888] py-10 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl text-center">
+        <p className="text-white text-xl sm:text-2xl font-semibold leading-relaxed">
+          🌍 Our Mission:{" "}
+          <span className="text-[#E0D5FF]">
+            Create mental health awareness among NRIs
+          </span>{" "}
+          — breaking stigma, bridging cultures, and making therapy accessible for every Indian abroad.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // Pain Points
 // ─────────────────────────────────────────────────────────────
 
@@ -117,10 +137,10 @@ function PainPoints() {
             You don&apos;t have to{" "}
             <span className="text-[#7B5FB8]">explain yourself</span>
           </h2>
-          <p className="text-gray-500 text-lg leading-relaxed">
+          <p className="text-gray-700 text-xl leading-relaxed">
             Western therapists don&apos;t understand why your mother&apos;s
             phone call can ruin your week. Our therapists grew up in the{" "}
-            <strong className="text-gray-700 font-semibold">same culture you did.</strong>
+            <strong className="text-gray-900 font-semibold">same culture you did.</strong>
           </p>
         </div>
 
@@ -143,10 +163,10 @@ function PainPoints() {
               )}
               <div className="p-8">
                 <div className="mb-4 text-4xl">{point.emoji}</div>
-                <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                <h3 className="mb-2 text-xl font-semibold text-[#7B5FB8]">
                   {point.title}
                 </h3>
-                <p className="text-gray-500 leading-relaxed">{point.body}</p>
+                <p className="text-gray-700 leading-relaxed">{point.body}</p>
               </div>
             </div>
           ))}
@@ -191,17 +211,18 @@ function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="bg-[#7B5FB8] py-20 px-4 sm:px-6 lg:px-8"
+      className="bg-gradient-to-br from-[#2A1A4A] to-[#3E2868] py-20 px-4 sm:px-6 lg:px-8"
     >
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center mb-14">
           <h2
-            className="text-3xl sm:text-4xl font-bold text-white mb-4"
+            className="text-4xl sm:text-5xl font-bold text-white mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            How it works
+            How it{" "}
+            <span className="text-[#A78BDE]">works</span>
           </h2>
-          <p className="text-[#C4B5F0] text-lg">
+          <p className="text-gray-300 text-xl">
             From first message to first session in less than 24 hours.
           </p>
         </div>
@@ -209,16 +230,16 @@ function HowItWorks() {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
           {steps.map((step, i) => (
             <div key={step.title} className="text-center">
-              <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/10 text-4xl">
+              <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/15 text-4xl">
                 {step.icon}
-                <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#A78BDE] text-xs font-bold text-white">
+                <span className="absolute -top-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-[#7B5FB8] text-xs font-bold text-white">
                   {i + 1}
                 </span>
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-white">
+              <h3 className="mb-2 text-xl font-semibold text-white">
                 {step.title}
               </h3>
-              <p className="text-[#C4B5F0] text-sm leading-relaxed max-w-xs mx-auto">
+              <p className="text-gray-300 text-base leading-relaxed max-w-xs mx-auto">
                 {step.body}
               </p>
             </div>
@@ -228,7 +249,7 @@ function HowItWorks() {
         <div className="mt-14 text-center">
           <Link
             href="/therapists"
-            className="inline-flex items-center gap-2 rounded-full bg-[#A78BDE] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#9B7FD4] transition-all hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 rounded-full bg-[#7B5FB8] px-8 py-4 text-lg font-semibold text-white shadow-lg hover:bg-[#6B4AA0] transition-all hover:-translate-y-0.5"
           >
             Get Started in 2 Minutes →
           </Link>
@@ -272,9 +293,9 @@ function Services() {
             What{" "}
             <span className="text-[#7B5FB8]">We Help With</span>
           </h2>
-          <p className="text-gray-500 text-lg leading-relaxed">
+          <p className="text-gray-700 text-xl leading-relaxed">
             Specialized support for the unique mental health challenges{" "}
-            <strong className="text-gray-700 font-semibold">NRIs face every day.</strong>
+            <strong className="text-gray-900 font-semibold">NRIs face every day.</strong>
           </p>
         </div>
 
@@ -298,10 +319,10 @@ function Services() {
               )}
               <div className="p-6">
                 <div className="mb-3 text-3xl">{service.icon}</div>
-                <h3 className="mb-2 text-lg font-semibold text-gray-900 group-hover:text-[#7B5FB8] transition-colors">
+                <h3 className="mb-2 text-xl font-semibold text-[#7B5FB8] group-hover:text-[#553888] transition-colors">
                   {service.title}
                 </h3>
-                <p className="text-gray-500 leading-relaxed text-sm">{service.body}</p>
+                <p className="text-gray-700 leading-relaxed text-base">{service.body}</p>
               </div>
             </Link>
           ))}
@@ -374,10 +395,10 @@ function TrustSignals() {
               className="rounded-2xl bg-white border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="mb-4 text-3xl">{signal.icon}</div>
-              <h3 className="mb-1.5 text-base font-bold text-gray-900">
+              <h3 className="mb-1.5 text-lg font-bold text-[#7B5FB8]">
                 {signal.title}
               </h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
+              <p className="text-base text-gray-700 leading-relaxed">
                 {signal.body}
               </p>
             </div>
@@ -437,8 +458,8 @@ function Testimonials() {
             Stories from{" "}
             <span className="text-[#7B5FB8]">the diaspora</span>
           </h2>
-          <p className="text-gray-500 text-lg">
-            Real experiences from <strong className="text-gray-700 font-semibold">NRIs who found their footing.</strong>
+          <p className="text-gray-700 text-xl">
+            Real experiences from <strong className="text-gray-900 font-semibold">NRIs who found their footing.</strong>
           </p>
         </div>
 
@@ -448,7 +469,7 @@ function Testimonials() {
               key={t.name}
               className="rounded-2xl bg-[#F8F5FF] border border-[#7B5FB8]/10 p-8 flex flex-col"
             >
-              <blockquote className="flex-1 text-gray-700 leading-relaxed italic mb-6">
+              <blockquote className="flex-1 text-gray-800 leading-relaxed italic mb-6 text-base">
                 &ldquo;{t.quote}&rdquo;
               </blockquote>
               <figcaption className="flex items-center gap-3">
@@ -508,9 +529,9 @@ function FAQ() {
             Frequently{" "}
             <span className="text-[#7B5FB8]">asked questions</span>
           </h2>
-          <p className="text-gray-500 text-lg">
+          <p className="text-gray-700 text-xl">
             Everything you need to know{" "}
-            <strong className="text-gray-700 font-semibold">before your first session.</strong>
+            <strong className="text-gray-900 font-semibold">before your first session.</strong>
           </p>
         </div>
 
@@ -664,6 +685,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
+        <MissionStatement />
         <PainPoints />
         <HowItWorks />
         <Services />

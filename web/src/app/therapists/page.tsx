@@ -136,7 +136,19 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
   const isElite = therapist.tier === "elite";
 
   return (
-    <div className="group rounded-2xl bg-white border border-gray-100 p-8 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+    <div className={`group rounded-2xl bg-white p-8 shadow-sm hover:shadow-lg transition-all flex flex-col ${
+      isElite
+        ? "border-2 border-amber-300 ring-1 ring-amber-200/50"
+        : "border-2 border-[#7B5FB8]/30"
+    }`}>
+      {/* Elite ribbon */}
+      {isElite && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-50 to-amber-100 px-3 py-1.5 -mt-2">
+          <span className="text-amber-600 text-sm">⭐</span>
+          <span className="text-xs font-bold uppercase tracking-wide text-amber-700">Elite Therapist</span>
+        </div>
+      )}
+
       {/* Avatar + name row */}
       <div className="flex items-start gap-5 mb-5">
         {therapist.photo_url ? (
@@ -144,7 +156,9 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
           <img
             src={therapist.photo_url}
             alt={therapist.full_name}
-            className="h-28 w-28 rounded-full object-cover shrink-0"
+            className={`h-28 w-28 rounded-full object-cover shrink-0 ${
+              isElite ? "ring-3 ring-amber-300" : "ring-3 ring-[#7B5FB8]/30"
+            }`}
           />
         ) : (
           <AvatarInitials name={therapist.full_name} />
@@ -158,7 +172,9 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
             </h3>
             <span
               title="Verified therapist"
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#7B5FB8] text-white text-xs shrink-0"
+              className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-white text-xs shrink-0 ${
+                isElite ? "bg-amber-500" : "bg-[#7B5FB8]"
+              }`}
             >
               ✓
             </span>
@@ -166,7 +182,7 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
 
           {/* Experience */}
           {therapist.experience_years && (
-            <p className="text-base text-gray-500 mt-1">
+            <p className="text-base text-gray-600 mt-1">
               {therapist.experience_years} years experience
             </p>
           )}
@@ -175,8 +191,8 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
           <span
             className={`inline-block mt-2 rounded-full px-3 py-1 text-sm font-semibold capitalize ${
               isElite
-                ? "bg-amber-100 text-amber-800"
-                : "bg-[#7B5FB8]/10 text-[#7B5FB8]"
+                ? "bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border border-amber-300"
+                : "bg-[#7B5FB8]/10 text-[#7B5FB8] border border-[#7B5FB8]/20"
             }`}
           >
             {therapist.tier}
@@ -184,24 +200,24 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
         </div>
       </div>
 
-      {/* Specialty tags */}
+      {/* Specialty tags — purple */}
       <div className="flex flex-wrap gap-2 mb-4">
         {therapist.specialties.slice(0, 3).map((s) => (
           <span
             key={s}
-            className="rounded-full bg-[#A78BDE]/15 px-3 py-1 text-sm font-medium text-[#6B4AA0]"
+            className="rounded-full bg-[#7B5FB8]/12 border border-[#7B5FB8]/20 px-3 py-1 text-sm font-medium text-[#553888]"
           >
             {s}
           </span>
         ))}
       </div>
 
-      {/* Language badges */}
+      {/* Language badges — teal/blue-green to differentiate from specialties */}
       <div className="flex flex-wrap gap-2 mb-4">
         {therapist.languages.map((lang) => (
           <span
             key={lang}
-            className="rounded-full bg-[#7B5FB8]/10 border border-[#7B5FB8]/20 px-3 py-1 text-sm font-medium text-[#6B4AA0] hover:bg-[#7B5FB8]/20 transition-colors duration-200 cursor-default animate-pulse-subtle"
+            className="rounded-full bg-teal-50 border border-teal-200 px-3 py-1 text-sm font-medium text-teal-700 hover:bg-teal-100 transition-colors duration-200 cursor-default"
           >
             🗣️ {lang}
           </span>
@@ -217,7 +233,7 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
 
       {/* Rate + CTAs */}
       <div className="mt-auto">
-        <p className="text-lg font-semibold text-gray-900 mb-3">
+        <p className="text-xl font-bold text-gray-900 mb-3">
           ${rate}
           <span className="text-base font-normal text-gray-400">/session</span>
         </p>
@@ -230,7 +246,11 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
           </Link>
           <Link
             href={`/book?therapist=${therapist.slug}`}
-            className="flex-1 rounded-full bg-[#7B5FB8] px-5 py-3 text-base font-semibold text-white hover:bg-[#6B4AA0] transition-colors text-center"
+            className={`flex-1 rounded-full px-5 py-3 text-base font-semibold text-white transition-colors text-center ${
+              isElite
+                ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
+                : "bg-[#7B5FB8] hover:bg-[#6B4AA0]"
+            }`}
           >
             Book Now
           </Link>
@@ -362,27 +382,7 @@ function FilterBar({
             </select>
           </div>
 
-          {/* Tier toggle */}
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">
-              Tier
-            </label>
-            <div className="flex rounded-xl border border-gray-200 overflow-hidden">
-              {TIER_OPTIONS.map((o) => (
-                <button
-                  key={o.value}
-                  onClick={() => setTier(o.value)}
-                  className={`px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                    tier === o.value
-                      ? "bg-[#7B5FB8] text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {o.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Tier toggle removed — user requested removal */}
         </div>
 
         {/* Specialty chips */}
