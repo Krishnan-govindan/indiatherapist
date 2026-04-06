@@ -88,7 +88,7 @@ function renderMarkdown(text: string, isUser: boolean): React.ReactNode {
                 className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full"
                 style={{ background: isUser ? "rgba(255,255,255,0.7)" : "#7B5FB8" }}
               />
-              <span>{renderInline(item)}</span>
+              <span style={{ color: 'inherit' }}>{renderInline(item)}</span>
             </li>
           ))}
         </ul>
@@ -104,7 +104,7 @@ function renderMarkdown(text: string, isUser: boolean): React.ReactNode {
               >
                 {i + 1}.
               </span>
-              <span>{renderInline(item)}</span>
+              <span style={{ color: 'inherit' }}>{renderInline(item)}</span>
             </li>
           ))}
         </ol>
@@ -134,7 +134,7 @@ function renderMarkdown(text: string, isUser: boolean): React.ReactNode {
         }
       } else {
         nodes.push(
-          <p key={nodes.length} className="leading-relaxed">
+          <p key={nodes.length} className="leading-relaxed" style={{ color: 'inherit' }}>
             {renderInline(line)}
           </p>
         );
@@ -480,7 +480,7 @@ export default function ChatWidget() {
                         ? "rounded-br-sm text-white"
                         : "rounded-bl-sm border border-gray-100 bg-white text-gray-800 shadow-sm"
                     }`}
-                    style={msg.role === "user" ? { background: "#7B5FB8" } : undefined}
+                    style={msg.role === "user" ? { background: "#7B5FB8", color: "white" } : undefined}
                   >
                     {renderMarkdown(msg.content, msg.role === "user")}
                     {msg.ts > 0 && (
