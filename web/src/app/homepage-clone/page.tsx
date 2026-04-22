@@ -5,7 +5,7 @@ import JsonLd from "@/components/SEO/JsonLd";
 import { getOrganizationSchema, getWebSiteSchema, getFaqSchema } from "@/lib/schemas";
 import { FEATURED_THERAPISTS, type TherapistData } from "@/data/therapists";
 
-const WA_LINK = "https://wa.me/18568782862";
+const WA_LINK = "https://wa.me/14254424167";
 
 // ─────────────────────────────────────────────────────────────
 // Data

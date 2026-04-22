@@ -23,7 +23,7 @@ export interface TherapistData {
   is_active: boolean;
 }
 
-export const WHATSAPP_BUSINESS_NUMBER = "+18568782862";
+export const WHATSAPP_BUSINESS_NUMBER = "+14254424167";
 
 export const ALL_THERAPISTS: TherapistData[] = [
   // ═══════════════════════════════════════════════════════════

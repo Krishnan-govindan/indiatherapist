@@ -11,7 +11,7 @@ function ConfirmationContent() {
   const waMsg = encodeURIComponent(
     `Hi, my payment was successful. I'm looking forward to my session with ${therapistName}.`
   );
-  const waLink = `https://wa.me/18568782862?text=${waMsg}`;
+  const waLink = `https://wa.me/14254424167?text=${waMsg}`;
 
   return (
     <main className="min-h-screen bg-[#F8F5FF] flex flex-col items-center justify-center py-16 px-4">

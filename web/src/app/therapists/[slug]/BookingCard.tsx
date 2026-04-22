@@ -39,7 +39,7 @@ export default function BookingCard({
   const waMsg = encodeURIComponent(
     `Hi, I would like to connect with ${therapistName}`
   );
-  const waLink = `https://wa.me/18568782862?text=${waMsg}`;
+  const waLink = `https://wa.me/14254424167?text=${waMsg}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

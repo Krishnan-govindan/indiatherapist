@@ -230,7 +230,7 @@ function BookForm() {
         `*Looking for:* ${supportLabel}`,
         `*Concerns:* ${data.concerns.join(", ")}`,
       ];
-      window.location.href = `https://wa.me/18568782862?text=${encodeURIComponent(lines.join("\n"))}`;
+      window.location.href = `https://wa.me/14254424167?text=${encodeURIComponent(lines.join("\n"))}`;
     } catch {
       sessionStorage.removeItem(STORAGE_KEY);
       // Fallback to WhatsApp redirect on API failure
@@ -246,7 +246,7 @@ function BookForm() {
         `*Looking for:* ${supportLabel}`,
         `*Concerns:* ${data.concerns.join(", ")}`,
       ];
-      window.location.href = `https://wa.me/18568782862?text=${encodeURIComponent(lines.join("\n"))}`;
+      window.location.href = `https://wa.me/14254424167?text=${encodeURIComponent(lines.join("\n"))}`;
     } finally {
       setSubmitting(false);
     }

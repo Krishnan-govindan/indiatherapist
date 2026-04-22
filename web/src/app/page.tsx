@@ -5,7 +5,7 @@ import TherapistsPreview from "@/components/TherapistsPreview";
 import JsonLd from "@/components/SEO/JsonLd";
 import { getOrganizationSchema, getWebSiteSchema, getFaqSchema } from "@/lib/schemas";
 
-const WA_LINK = "https://wa.me/18568782862"; // Meta API WhatsApp: +1 (856) 878-2862
+const WA_LINK = "https://wa.me/14254424167"; // Support WhatsApp: +1 (425) 442-4167
 
 // ─────────────────────────────────────────────────────────────
 // Hero

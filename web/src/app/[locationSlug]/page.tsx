@@ -7,7 +7,7 @@ import { getFaqSchema } from "@/lib/schemas";
 import { LOCATIONS, LOCATION_MAP } from "@/lib/locationData";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.indiatherapist.com";
-const WA_LINK = "https://wa.me/18568782862";
+const WA_LINK = "https://wa.me/14254424167";
 
 // Only generate the specific location slugs — all others → 404
 export const dynamicParams = false;

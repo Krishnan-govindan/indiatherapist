@@ -23,7 +23,7 @@ India Therapist is the only online therapy platform exclusively for NRIs. We con
 
 **Website:** https://www.indiatherapist.com
 
-**Phone:** +1 (856) 878-2862
+**Phone:** +1 (425) 442-4167
 
 **Service type:** Online / Virtual (no physical address — select "Service area business")
 

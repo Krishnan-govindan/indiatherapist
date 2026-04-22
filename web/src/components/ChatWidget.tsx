@@ -323,7 +323,7 @@ export default function ChatWidget() {
                   {
                     role: "assistant" as const,
                     content:
-                      "I'm having trouble connecting. Please try again or reach us on WhatsApp at +1 (856) 878-2862.",
+                      "I'm having trouble connecting. Please try again or reach us on WhatsApp at +1 (425) 442-4167.",
                     ts: Date.now(),
                   },
                 ],

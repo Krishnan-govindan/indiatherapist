@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest web --typescript --tailwind --app --src-dir --no-git --eslint --use-npm --turbopack --import-alias \"@/*\")",
+      "Bash(npm run *)"
+    ]
+  },
+  "disableAllHooks": true
+}

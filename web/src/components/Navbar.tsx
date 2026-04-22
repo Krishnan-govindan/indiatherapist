@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-const WA_OWNER = "18568782862"; // Meta API WhatsApp: +1 (856) 878-2862
+const WA_OWNER = "14254424167"; // Support WhatsApp: +1 (425) 442-4167
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);

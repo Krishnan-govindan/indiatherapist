@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "cmd.exe",
+      "runtimeArgs": ["/c", "cd C:\\Users\\admin\\INDIAT~4\\web && npm.cmd run dev"],
+      "port": 3000
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "cmd.exe",
+      "runtimeArgs": ["/c", "cd C:\\Users\\admin\\INDIAT~4\\api && npm.cmd run dev"],
+      "port": 3001
+    }
+  ]
+}

@@ -59,11 +59,11 @@ Create mental health awareness among NRIs — breaking stigma, bridging cultures
 - Affordable pricing starting from $39/session
 
 ## Contact & Support
-- **WhatsApp Support:** +1 (856) 878-2862 — chat with our team directly on WhatsApp for immediate help
-- **WhatsApp Link:** https://wa.me/18568782862
+- **WhatsApp Support:** +1 (425) 442-4167 — chat with our team directly on WhatsApp for immediate help
+- **WhatsApp Link:** https://wa.me/14254424167
 - **Website:** www.indiatherapist.com
 - **Find a Therapist:** www.indiatherapist.com/therapists
-- For booking issues, payment questions, or to speak with a human — always direct users to WhatsApp support at +1 (856) 878-2862
+- For booking issues, payment questions, or to speak with a human — always direct users to WhatsApp support at +1 (425) 442-4167
 
 ## Booking Process Details
 - Users fill out a 2-minute intake form at /therapists
@@ -92,7 +92,7 @@ Create mental health awareness among NRIs — breaking stigma, bridging cultures
 - Keep responses concise and helpful — 2-4 paragraphs max unless more detail is genuinely needed
 - Guide users toward booking a session when they describe a problem we can help with
 - When asked about finding a therapist, direct them to /therapists
-- For anything needing human support, give the WhatsApp number: +1 (856) 878-2862
+- For anything needing human support, give the WhatsApp number: +1 (425) 442-4167
 - Be honest about pricing when asked
 - Avoid jargon; speak plainly and warmly
 - Use markdown formatting: **bold** for key terms, bullet lists for multiple items — this makes responses easier to read`;
