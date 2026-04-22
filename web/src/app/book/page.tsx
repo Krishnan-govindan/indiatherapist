@@ -117,7 +117,6 @@ function BookForm() {
 
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [animDir, setAnimDir] = useState<"forward" | "back">("forward");
 
@@ -185,16 +184,36 @@ function BookForm() {
 
   const goBack = () => transition(step - 1, "back");
 
-  // -- Submit: save to DB → if therapist selected, API handles WA; otherwise redirect to WA
+  // -- Submit: save lead to DB (fire-and-forget) → always redirect to WhatsApp
+  //    with pre-filled message containing all form details + therapist name.
   const onSubmit = async (data: FormData) => {
     setSubmitting(true);
     const phone = `${data.phone_code}${data.phone_number.replace(/\D/g, "")}`;
     const supportLabel =
       SUPPORT_TYPES.find((t) => t.value === data.support_type)?.label ?? data.support_type;
 
+    // Build WhatsApp pre-filled message
+    const greeting = therapistName
+      ? `Hi, I'd like to connect with ${therapistName}. Can you help me out?`
+      : `Hi, I'd like to book a session.`;
+    const lines = [
+      greeting,
+      ``,
+      `*Name:* ${data.full_name}`,
+      `*Email:* ${data.email}`,
+      `*Phone:* ${data.phone_code} ${data.phone_number}`,
+      `*Country:* ${data.country}`,
+      `*Looking for:* ${supportLabel}`,
+      `*Concerns:* ${data.concerns.join(", ")}`,
+    ];
+    if (therapistName) {
+      lines.push(`*Therapist:* ${therapistName}`);
+    }
+    const waUrl = `https://wa.me/14254424167?text=${encodeURIComponent(lines.join("\n"))}`;
+
+    // Fire-and-forget: save lead to DB but don't block the WhatsApp redirect.
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
       await fetch(`${apiUrl}/api/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -209,83 +228,13 @@ function BookForm() {
           source: "book_form",
         }),
       });
-
-      sessionStorage.removeItem(STORAGE_KEY);
-
-      // If a specific therapist was selected, the API handles WhatsApp outreach.
-      // Show success screen so the client knows we're on it.
-      if (therapistSlug) {
-        setSubmitted(true);
-        return;
-      }
-
-      // No therapist selected — redirect to WhatsApp with pre-filled message
-      const greeting = `Hi, I'd like to book a session.`;
-      const lines = [
-        greeting, ``,
-        `*Name:* ${data.full_name}`,
-        `*Email:* ${data.email}`,
-        `*Phone:* ${data.phone_code} ${data.phone_number}`,
-        `*Country:* ${data.country}`,
-        `*Looking for:* ${supportLabel}`,
-        `*Concerns:* ${data.concerns.join(", ")}`,
-      ];
-      window.location.href = `https://wa.me/14254424167?text=${encodeURIComponent(lines.join("\n"))}`;
     } catch {
-      sessionStorage.removeItem(STORAGE_KEY);
-      // Fallback to WhatsApp redirect on API failure
-      const greeting = therapistName
-        ? `Hi I'd like to connect with ${therapistName}. Can you help me out?`
-        : `Hi, I'd like to book a session.`;
-      const lines = [
-        greeting, ``,
-        `*Name:* ${data.full_name}`,
-        `*Email:* ${data.email}`,
-        `*Phone:* ${data.phone_code} ${data.phone_number}`,
-        `*Country:* ${data.country}`,
-        `*Looking for:* ${supportLabel}`,
-        `*Concerns:* ${data.concerns.join(", ")}`,
-      ];
-      window.location.href = `https://wa.me/14254424167?text=${encodeURIComponent(lines.join("\n"))}`;
-    } finally {
-      setSubmitting(false);
+      // Ignore API errors — still redirect to WhatsApp
     }
+
+    sessionStorage.removeItem(STORAGE_KEY);
+    window.location.href = waUrl;
   };
-
-  // ─────────────────────────────────────────────────────────
-  // Success screen — shown when API handled therapist contact
-  // ─────────────────────────────────────────────────────────
-
-  if (submitted) {
-    return (
-      <main className="min-h-screen bg-[#F8F5FF] flex flex-col items-center justify-center py-16 px-4">
-        <div className="w-full max-w-md text-center">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#7B5FB8]/10">
-            <svg className="h-10 w-10 text-[#7B5FB8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-3" style={{ fontFamily: "'Outfit', sans-serif" }}>
-            Request Submitted!
-          </h1>
-          <p className="text-gray-600 leading-relaxed mb-2">
-            We&apos;ve reached out to{" "}
-            <span className="font-semibold text-gray-900">{therapistName ?? "your selected therapist"}</span>{" "}
-            to check their availability.
-          </p>
-          <p className="text-gray-500 text-sm mb-8">
-            We&apos;ll WhatsApp you as soon as they confirm — usually within a few hours. 💜
-          </p>
-          <Link
-            href="/therapists"
-            className="text-sm text-[#7B5FB8] hover:underline"
-          >
-            ← Browse other therapists
-          </Link>
-        </div>
-      </main>
-    );
-  }
 
   // ─────────────────────────────────────────────────────────
   // Form steps
