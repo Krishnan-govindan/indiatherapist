@@ -43,7 +43,7 @@ const services = [
 const trustSignals = [
   { icon: "🗣️", title: "Culturally tailored therapy", body: "Top Indian therapists who speak your language — Hindi, Tamil, Telugu, Gujarati, Marathi, Kannada, Malayalam, Punjabi, and more." },
   { icon: "💰", title: "Affordable therapy for NRIs", body: "$39–$141/session vs. $150–$300 in the US or UK. Quality therapy that doesn't break the bank." },
-  { icon: "✅", title: "Risk-free first session", body: "Not the right fit? Full refund, no questions asked. We want this to work for you." },
+  { icon: "✅", title: "Switch therapists anytime", body: "Not the right fit? We'll help you switch to another therapist at no extra cost. The right connection matters." },
   { icon: "🌐", title: "Online counseling from anywhere", body: "Attend sessions from wherever you are in the world. No commute, no waiting rooms — just you and your therapist." },
   { icon: "🎓", title: "10–22 years clinical experience", body: "Licensed professionals like Aekta (22 yrs), Suvarna (14 yrs), and Niyatii (13 yrs). No freshers, no exceptions." },
   { icon: "🤝", title: "Exceptional service, every step", body: "From your first WhatsApp message to your first session in under 24 hours. We coordinate everything so you don't have to." },
@@ -62,7 +62,7 @@ const faqs = [
   { q: "What should I expect during a therapy session?", a: "Your first session is a safe, confidential space to share what's on your mind. Your therapist will listen, understand your concerns, and work with you on a personalized plan. Sessions are 60 minutes via secure video call — attend from anywhere in the world." },
   { q: "How long does therapy typically last?", a: "It varies by person and concern. Some clients find clarity in 4-6 sessions, while others prefer ongoing support. Your therapist will work with you to set goals and decide what feels right. There are no long-term commitments required." },
   { q: "How much does a session cost?", a: "Sessions range from $39 to $141 per 60-minute session, depending on the therapist's experience and specialization. That's up to 60% less than typical therapy rates in the US or UK — affordable, culturally tailored therapy." },
-  { q: "What if I don't feel a connection with my therapist?", a: "Your first session is risk-free. If it's not the right fit, you get a full refund — no questions asked. We can also help you switch to another therapist at no extra cost. The right connection matters." },
+  { q: "What if I don't feel a connection with my therapist?", a: "We can help you switch to another therapist at no extra cost. The right connection matters, and we'll work with you to find the best match." },
   { q: "How can therapy benefit my personal development?", a: "Beyond addressing specific concerns, therapy helps you build self-awareness, improve communication, manage stress, and develop healthier relationships. Many NRIs use therapy to navigate cultural identity, career transitions, and family dynamics more effectively." },
 ];
 
@@ -963,7 +963,7 @@ function Footer() {
             <ul className="space-y-2.5 text-sm" style={{ color: "#999" }}>
               <li><Link href="/privacy" className="hover:text-[#c9b037] transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="hover:text-[#c9b037] transition-colors">Terms of Service</Link></li>
-              <li><Link href="/terms" className="hover:text-[#c9b037] transition-colors">Refund Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-[#c9b037] transition-colors">Cancellation Policy</Link></li>
             </ul>
           </div>
         </div>

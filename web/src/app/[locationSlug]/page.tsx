@@ -283,8 +283,8 @@ export default async function LocationPage({
             </h2>
             <p className="text-[#C4B5F0] text-lg mb-8 max-w-2xl mx-auto">
               Browse our full directory of verified Indian therapists. Filter by
-              language, speciality, and session rate. Your first session is
-              risk-free.
+              language, speciality, and session rate. Switch therapists anytime
+              at no extra cost.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
@@ -358,8 +358,8 @@ export default async function LocationPage({
               Book your session from {loc.displayName}
             </h2>
             <p className="text-gray-500 text-lg mb-8">
-              From first message to first session in under 24 hours. Risk-free
-              first session — full refund if it&apos;s not the right fit.
+              From first message to first session in under 24 hours. Not the
+              right fit? Switch therapists anytime at no extra cost.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link

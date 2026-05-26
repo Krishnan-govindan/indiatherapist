@@ -181,8 +181,8 @@ export default function AboutPage() {
               Ready to talk to someone who gets it?
             </h2>
             <p className="text-[#C4B5F0] mb-8">
-              Your first session is risk-free. If it&apos;s not the right fit,
-              you get a full refund.
+              Not the right fit? We&apos;ll help you switch to another
+              therapist at no extra cost.
             </p>
             <Link
               href="/therapists"
@@ -230,7 +230,7 @@ const values = [
   },
   {
     icon: "✅",
-    title: "Risk-Free Promise",
-    body: "Not the right fit? Full refund after your first session, no questions asked. We want this to work for you.",
+    title: "Switch Therapists Anytime",
+    body: "Not the right fit? We'll help you switch to another therapist at no extra cost. The right connection matters.",
   },
 ];

@@ -52,7 +52,7 @@ export default function TermsPage() {
           <ul className="list-disc pl-6 space-y-2">
             <li>Session fees are displayed clearly before booking and are charged in USD.</li>
             <li>Payments are processed securely through Stripe.</li>
-            <li>Cancellations made more than 24 hours before the session may be eligible for a full refund. Cancellations within 24 hours may be non-refundable.</li>
+            <li>Cancellations made more than 24 hours before the session may be eligible for a session credit or reschedule. Cancellations within 24 hours are non-refundable. Refunds are not provided after a session has been completed.</li>
             <li>We reserve the right to modify pricing with reasonable notice.</li>
           </ul>
         </section>

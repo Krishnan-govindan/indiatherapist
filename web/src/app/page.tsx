@@ -422,8 +422,8 @@ const trustSignals = [
   },
   {
     icon: "✅",
-    title: "Risk-free first session",
-    body: "Not the right fit? Full refund, no questions asked. We want this to work for you.",
+    title: "Switch therapists anytime",
+    body: "Not the right fit? We'll help you switch to another therapist at no extra cost. The right connection matters.",
   },
   {
     icon: "🌐",
@@ -590,7 +590,7 @@ const faqs = [
   },
   {
     q: "What if I don't feel a connection with my therapist?",
-    a: "Your first session is risk-free. If it's not the right fit, you get a full refund — no questions asked. We can also help you switch to another therapist at no extra cost. The right connection matters.",
+    a: "We can help you switch to another therapist at no extra cost. The right connection matters, and we'll work with you to find the best match.",
   },
   {
     q: "How can therapy benefit my personal development?",
@@ -652,7 +652,7 @@ function Footer() {
             <ul className="space-y-3 text-base">
               <li><Link href="/privacy" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>Privacy Policy</Link></li>
               <li><Link href="/terms" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>Terms of Service</Link></li>
-              <li><Link href="/terms" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>Refund Policy</Link></li>
+              <li><Link href="/terms" className="transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>Cancellation Policy</Link></li>
             </ul>
           </div>
         </div>
