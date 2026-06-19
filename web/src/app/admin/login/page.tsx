@@ -16,17 +16,21 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    // Set cookie via API route
-    const res = await fetch("/api/admin-auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secret }),
-    });
-    setLoading(false);
-    if (res.ok) {
-      router.push(from);
-    } else {
-      setError("Incorrect password.");
+    try {
+      const res = await fetch("/api/admin-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret }),
+      });
+      if (res.ok) {
+        window.location.href = from;
+      } else {
+        setError("Incorrect password.");
+      }
+    } catch {
+      setError("Connection failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
